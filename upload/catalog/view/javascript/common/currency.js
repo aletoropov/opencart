@@ -1,66 +1,70 @@
-import { WebComponent } from '../index.js';
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
-    async connected() {
+// library
+const local = await loader.library('local');
 
+// Testing code
+local.set('currency', 'EUR');
+
+// Config
+const config = await loader.config('catalog');
+
+// Language
+const language = await loader.language('common/currency');
+
+// Storage
+let currencies = await loader.storage('localisation/currency');
+
+class CommonCurrency extends WebComponent {
+    connected() {
+        let data = { ...Object.fromEntries(language) };
+
+        // Set the code for the default currency
+        let code = config.get('config_currency');
+
+        if (local.has('currency')) {
+           code = local.get('currency');
+        }
+
+        if (currencies.has(code)) {
+            let currency = currencies.get(code);
+
+            data.symbol_left = currency.symbol_left;
+            data.symbol_right = currency.symbol_right;
+        } else {
+            data.symbol_left = '';
+            data.symbol_right = '';
+        }
+
+        data.code = code;
+        data.currencies = currencies.values();
+
+        console.log(data);
+
+        let response = loader.template('common/currency', data);
+
+        response.then(this.render.bind(this));
+        response.then(this.addEvent.bind(this));
     }
-}
 
-customElements.define('x-account', XAccount);
+    render(html) {
+        this.innerHTML = html;
+    }
 
-import { WebComponent } from './../../../../assets/framework/library/webcomponent.js';
-
-class XCurrency extends WebComponent {
-    data = [];
-
-    async connected() {
-        this.load.language('common/currency');
-
-        this.load.language('common/currency');
-
-        this.innerHtml = this.load.template('common/currency', this.data);
-
-        const currencies = await registry.storage.fetch('localisation/currency');
-
-
-        console.log(form);
+    addEvent() {
+        let form = document.querySelector('#form-currency');
 
         let elements = form.querySelectorAll('a');
 
-        elements.forEach((element) => {
-
-        });
-
-        currency.addEventListener('click', async (e) => {
-            let element = this;
-
-            let code = $(element).attr('href');
-
-            registry.local.set('currency', code);
-        });
+        for (let element of elements) {
+            element.addEventListener('click', this.onClick);
+        }
     }
 
-    render(json) {
-        let html = '';
-
-        html += '<form id="form-language">';
-        html += '  <div class="dropdown">';
-        html += '    <a href="#" data-bs-toggle="dropdown" class="dropdown-toggle"><strong>$</strong> <span class="d-none d-md-inline">Currency</span> <i class="fa-solid fa-caret-down"></i></a>';
-        html += '    <ul class="dropdown-menu">';
-
-        for (let currency of currencies) {
-
-
-
-            html += '      <li><a href="' + currency.code + '" class="dropdown-item">€ ' + currency.title + '</a></li>';
-        }
-
-        html += '     </ul>';
-        html += '  </div>';
-        html += '</form>';
-
-        this.innerHtml = html;
+    onClick(e) {
+        local.set('currency', this.getAttribute('href'));
     }
 }
 
-customElements.define('x-currency', XCurrency);
+customElements.define('common-currency', CommonCurrency);

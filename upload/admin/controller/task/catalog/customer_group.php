@@ -9,7 +9,7 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 	/**
 	 * Index
 	 *
-	 * Generate customer group task list.
+	 * Generates all customer group data.
 	 *
 	 * @param array<string, string> $args
 	 *
@@ -18,36 +18,39 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 	public function index(array $args = []): array {
 		$this->load->language('task/catalog/customer_group');
 
-		$this->load->model('setting/task');
-
-		$stores = [];
-
-		$stores[] = [
-			'store_id' => 0,
-			'name'     => $this->config->get('config_name')
+		// Clear old data
+		$task_data = [
+			'code'   => 'customer_group',
+			'action' => 'task/catalog/customer_group.clear',
+			'args'   => []
 		];
 
-		$this->load->model('setting/store');
+		$this->load->model('setting/task');
 
-		$stores = array_merge($stores, $this->model_setting_store->getStores());
+		$this->model_setting_task->addTask($task_data);
 
-		$this->load->model('localisation/language');
+		// List
+		$task_data = [
+			'code'   => 'customer_group',
+			'action' => 'task/catalog/customer_group.list',
+			'args'   => []
+		];
 
-		$languages = $this->model_localisation_language->getLanguages();
+		$this->model_setting_task->addTask($task_data);
 
-		foreach ($stores as $store) {
-			foreach ($languages as $language) {
-				$task_data = [
-					'code'   => 'customer_group',
-					'action' => 'task/catalog/customer_group.list',
-					'args'   => [
-						'store_id'    => $store['store_id'],
-						'language_id' => $language['language_id']
-					]
-				];
+		// Info
+		$this->load->model('customer/customer_group');
 
-				$this->model_setting_task->addTask($task_data);
-			}
+		$customer_groups = $this->model_customer_customer_group->getCustomerGroups();
+
+		foreach ($customer_groups as $customer_group) {
+			$task_data = [
+				'code'   => 'customer_group',
+				'action' => 'task/catalog/customer_group.info',
+				'args'   => ['customer_group_id' => $customer_group['customer_group_id']]
+			];
+
+			$this->model_setting_task->addTask($task_data);
 		}
 
 		return ['success' => $this->language->get('text_task')];
@@ -65,55 +68,67 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 	public function list(array $args = []): array {
 		$this->load->language('task/catalog/customer_group');
 
-		$required = [
-			'store_id',
-			'language_id'
+		// Customer Group
+		$this->load->model('customer/customer_group');
+
+		// Stores
+		$stores = [];
+
+		$stores[] = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name'),
+			'url'      => HTTP_CATALOG
 		];
 
-		foreach ($required as $value) {
-			if (!array_key_exists($value, $args)) {
-				return ['error' => sprintf($this->language->get('error_required'), $value)];
+		$this->load->model('setting/store');
+
+		$stores = array_merge($stores, $this->model_setting_store->getStores());
+
+		$this->load->model('localisation/language');
+
+		$languages = $this->model_localisation_language->getLanguages();
+
+
+
+
+		foreach ($stores as $store) {
+			$languages = $this->model_setting_setting->getValue('config_language_list', $store['store_id']);
+
+
+			$customer_groups = $this->model_setting_setting->getValue('config_customer_group_list', $store['store_id']);
+
+			$customer_groups = $this->model_customer_customer_group->getCustomerGroups();
+
+			foreach ($languages as $language) {
+
+
+
+
+				$description_info = $this->model_localisation_country->getDescription($country_info['country_id'], $language_id);
+
+				if (!$description_info) {
+					continue;
+				}
+
+
+
+
+
+
 			}
 		}
 
-		// Store
-		$this->load->model('setting/store');
 
-		$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
 
-		if (!$store_info) {
-			return ['error' => $this->language->get('error_store')];
-		}
 
-		// Language
-		$this->load->model('localisation/language');
 
-		$language_info = $this->model_localisation_language->getLanguage((int)$args['language_id']);
 
-		if (!$language_info) {
-			return ['error' => $this->language->get('error_language')];
-		}
+
+		$this->load->language('task/catalog/customer_group');
 
 		$this->load->model('setting/task');
 
-		$this->load->model('customer/customer_group');
 
-		$customer_groups = $this->model_customer_customer_group->getCustomerGroups(['filter_language_id' => $language_info['language_id']]);
-
-		foreach ($customer_groups as $customer_group) {
-			// Add a task for generating the country info data
-			$task_data = [
-				'code'   => 'customer_group',
-				'action' => 'task/catalog/customer_group.info',
-				'args'   => [
-					'customer_group_id' => $customer_group['customer_group_id'],
-					'store_id'          => $store_info['store_id'],
-					'language_id'       => $language_info['language_id']
-				]
-			];
-
-			$this->model_setting_task->addTask($task_data);
-		}
 
 		$base = DIR_CATALOG . 'view/data/';
 		$directory = parse_url($store_info['url'], PHP_URL_HOST) . '/' . $language_info['code'] . '/customer/';
@@ -130,6 +145,10 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 		return ['success' => sprintf($this->language->get('text_list'), $language_info['name'])];
 	}
 
+
+
+
+
 	/**
 	 * Info
 	 *
@@ -142,36 +161,6 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 	public function info(array $args = []): array {
 		$this->load->language('task/catalog/customer_group');
 
-		$required = [
-			'customer_group_id',
-			'store_id',
-			'language_id'
-		];
-
-		foreach ($required as $value) {
-			if (!array_key_exists($value, $args)) {
-				return ['error' => sprintf($this->language->get('error_required'), $value)];
-			}
-		}
-
-		// Store
-		$this->load->model('setting/store');
-
-		$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
-
-		if (!$store_info) {
-			return ['error' => $this->language->get('error_store')];
-		}
-
-		// Language
-		$this->load->model('localisation/language');
-
-		$language_info = $this->model_localisation_language->getLanguage((int)$args['language_id']);
-
-		if (!$language_info) {
-			return ['error' => $this->language->get('error_language')];
-		}
-
 		// Customer Group
 		$this->load->model('customer/customer_group');
 
@@ -181,11 +170,45 @@ class CustomerGroup extends \Opencart\System\Engine\Controller {
 			return ['error' => $this->language->get('error_customer_group')];
 		}
 
-		$description_info = $this->model_customer_customer_group->getDescription($customer_group_info['customer_group_id'], $language_info['language_id']);
+		// Store
+		$stores = [];
 
-		if (!$description_info) {
-			return ['error' => $this->language->get('error_description')];
+		$stores[] = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name')
+		];
+
+		$this->load->model('setting/store');
+
+		$stores = array_merge($stores, $this->model_setting_store->getStores());
+
+		$this->load->model('localisation/language');
+
+		$languages = $this->model_localisation_language->getLanguages();
+
+
+		foreach ($stores as $store) {
+			foreach ($languages as $language) {
+
+				$description_info = $this->model_customer_customer_group->getDescription($customer_group_info['customer_group_id'], $language['language_id']);
+
+				if (!$description_info) {
+					return ['error' => $this->language->get('error_description')];
+				}
+
+
+
+
+
+
+			}
 		}
+
+
+
+
+
+
 
 		// Custom Fields
 		$filter_data = [

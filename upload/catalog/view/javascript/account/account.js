@@ -1,9 +1,12 @@
-import { WebComponent } from '../index.js';
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
+const language = await loader.language('account/account');
+
+class AccountAccount extends WebComponent {
     async connected() {
-
+        this.innerHTML = await loader.template('account/account', { ...language });
     }
 }
 
-customElements.define('x-account', XAccount);
+customElements.define('account-account', AccountAccount);

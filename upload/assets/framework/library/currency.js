@@ -1,22 +1,26 @@
-export class Currency {
-    static currencies = [];
+import { loader } from './loader.js';
 
-    constructor(currencies) {
-        this.currencies = currencies;
+const currencies = await loader.storage('localisation/currencies');
+
+class Currency {
+    static instance = null;
+    static currencies = {};
+
+    async constructor() {
+        this.currencies = new Map(currencies.toArray());
+
+        console.log('hi');
+        console.log(this.currencies);
     }
 
     format(number, code, value = 0, format = true) {
-        if (this.currencies[code] == undefined) {
-            return number;
-        }
+        if (!this.currencies.has(code)) return number;
 
-        value = parseFloat(value ? value : this.currencies[code].value);
+        let currency = this.currencies.get(code);
 
-        let symbol_left = this.currencies[code].symbol_left;
-        let symbol_right = this.currencies[code].symbol_right;
-        let decimal_place = this.currencies[code].decimal_place;
+        value = parseFloat(value ? value : currency.value);
 
-        let amount = parseFloat(number).toFixed(decimal_place);
+        let amount = parseFloat(number).toFixed(currency.decimal_place);
 
         let option = {
             style: 'currency',
@@ -24,13 +28,13 @@ export class Currency {
             currencyDisplay: 'symbol',
             currencySign: 'standard',
             minimumIntegerDigits: 1,
-            minimumFractionDigits: decimal_place
+            minimumFractionDigits: currency.decimal_place
         };
 
         let string = '';
 
-        if (symbol_left) {
-            string += symbol_left;
+        if (currency.symbol_left) {
+            string += currency.symbol_left;
         }
 
         let formater = new Intl.NumberFormat(document.querySelector('html').lang, option);
@@ -52,25 +56,28 @@ export class Currency {
             }
         }
 
-        if (symbol_right) {
-            string += symbol_right;
+        if (currency.symbol_right) {
+            string += currency.symbol_right;
         }
 
         return string;
     }
 
     convert(value, from, to) {
-        let from_value = 1;
-        let to_value = 1;
+        if (!this.currencies.has(from) || !this.currencies.has(to)) return value;
 
-        if (this.currencies[from] !== undefined) {
-            from_value = this.currencies[from].value;
+        return value * (this.currencies.get(to).value / this.currencies.get(from).value);
+    }
+
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new Currency();
         }
 
-        if (this.currencies[to] !== undefined) {
-            to = this.currencies[to].value;
-        }
-
-        return value * (to_value / from_value);
+        return this.instance;
     }
 }
+
+const currency = Currency.getInstance();
+
+export default currency;

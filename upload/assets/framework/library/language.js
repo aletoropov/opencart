@@ -1,48 +1,20 @@
-export class Language {
+class Language {
+    static instance;
     directory = '';
-    path = [];
-    loaded = [];
-    data = [];
+    path = new Map();
+    loaded = new Map();
 
     addPath(namespace, path = '') {
         if (!path) {
             this.directory = namespace;
         } else {
-            this.path[namespace] = path;
+            this.path.set(namespace, path);
         }
     }
 
-    get(key) {
-        return key in this.data ? this.data[key] : null;
-    }
-
-    set(key, value) {
-        this.data[key] = value;
-    }
-
-    has(key) {
-        return key in this.data;
-    }
-
-    remove(key) {
-        if (key in this.data) delete this.data[key];
-    }
-
-    all() {
-        return this.data;
-    }
-
-    clear() {
-        this.data = [];
-    }
-
-    async load(path) {
-        let key = path.replaceAll('/', '.');
-
-        if (key in this.loaded) {
-            this.data = this.data.concat(this.loaded[key]);
-
-            return;
+    async fetch(path) {
+        if (this.loaded.has(path)) {
+            return this.loaded.get(path);
         }
 
         let file = this.directory + path + '.json';
@@ -56,19 +28,35 @@ export class Language {
                 namespace += '/' + part;
             }
 
-            if (this.path[namespace] !== undefined) {
-                file = this.path[namespace] + path.substr(path, namespace.length) + '.json';
+            if (this.path.has(namespace)) {
+                file = this.path.get(namespace) + path.substr(path, namespace.length) + '.json';
             }
         }
 
         let response = await fetch(file);
 
         if (response.status == 200) {
-            this.loaded[key] = await response.json();
+            let object = await response.json();
 
-            this.data = this.data.concat(this.loaded[key]);
+            this.loaded.set(path, new Map(Object.entries(object)));
+
+            return this.loaded.get(path);
         } else {
             console.log('Could not load language file ' + path);
         }
+
+        return new Map();
+    }
+
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new Language();
+        }
+
+        return this.instance;
     }
 }
+
+const language = Language.getInstance();
+
+export default language;

@@ -1,41 +1,35 @@
-import { WebComponent } from '../index.js';
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XFooter extends WebComponent {
+// Config
+const config = await loader.config('catalog');
+
+// Language
+const language = await loader.language('common/footer');
+
+// Storage
+const articles = await loader.storage('cms/article-1');
+
+const informations = await loader.storage('information/information');
+
+const date = new Date();
+
+class CommonFooter extends WebComponent {
     async connected() {
-        console.log('fgfgfg');
+        let data = { ...Object.fromEntries(language) };
 
-        this.innerHtml = 'dfsdfdsfdsfsdf';
-
-        /*
-        let language = await this.language.fetch('common/footer');
-
-        let data = [];
-
-        // Blog
-        let articles = await this.storage.fetch('cms/article');
-
-        if (articles.length > 0) {
-            data.blog = true;
-        }
+        // Articles
+        data.articles = articles.values();
 
         // Information Pages
-        data.informations = [];
+        data.informations = informations.values();
 
-        let i = 0;
+        data.config_name = config.get('config_name');
 
-        let informations = await this.storage.fetch('information/information');
+        data.year = date.getFullYear();
 
-        for (let information of informations) {
-            data.informations[i++] = information + [href => information.information_id];
-        }
-
-
-        console.log(data);
-
-        this.innerHtml = this.load.template('common/footer',  [...data, ...language]);
-
-         */
+        this.innerHTML = await loader.template('common/footer', data);
     }
 }
 
-customElements.define('x-footer', XFooter);
+customElements.define('common-footer', CommonFooter);
