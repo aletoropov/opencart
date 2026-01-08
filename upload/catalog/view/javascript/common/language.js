@@ -1,72 +1,54 @@
-import { WebComponent } from './../../../../assets/framework/library/webcomponent.js';
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XLanguage extends WebComponent {
-    currency = '';
+// Config
+const config = await loader.config('catalog');
 
-    async connected() {
-        this.load.language('common/language');
+// Language
+const language = await loader.language('common/language');
 
-        let html = '';
+// Storage
+const languages = await loader.storage('localisation/language');
 
-        html += '<form id="form-language">';
-        html += '  <div class="dropdown">';
-        html += '    <a href="#" data-bs-toggle="dropdown" class="dropdown-toggle"><img src="{{ image }}" alt="{{ name }}" title="{{ name }}"> <span class="d-none d-md-inline">' + this.language.get('text_language') + '</span> <i class="fa-solid fa-caret-down"></i></a>';
-        html += '    <ul class="dropdown-menu"></ul>';
-        html += '  </div>';
-        html += '</form>';
+// URL
+const url = new URLSearchParams(document.location.search);
 
-        this.innerHtml = html;
+class CommonLanguage extends WebComponent {
+    language = languages;
 
-        let form = this.querySelector('#form-language');
+    connected() {
+        let data = { ...Object.fromEntries(language) };
 
+        // lang
+        data.code = document.documentElement.lang.toLowerCase();
 
-        let response = this.load.storage('localisation/language');
+        data.languages = this.language.values();
 
-        response.then(this.render);
+        let response = loader.template('common/language', data);
+
+        response.then(this.render.bind(this));
+        response.then(this.addEvent.bind(this));
     }
 
-    render(languages) {
-        let html = '';
+    render(html) {
+        this.innerHTML = html;
+    }
 
-        html += '<form id="form-language">';
-        html += '  <div class="dropdown">';
-        html += '    <a href="#" data-bs-toggle="dropdown" class="dropdown-toggle"><img src="{{ image }}" alt="{{ name }}" title="{{ name }}"> <span class="d-none d-md-inline">{{ text_language }}</span> <i class="fa-solid fa-caret-down"></i></a>';
-        html += '    <ul class="dropdown-menu">';
+    addEvent() {
+        let form = document.querySelector('#form-language');
 
-        for (let language of languages) {
-            html += '<li><a href="' + language.code + '" class="dropdown-item">' + language.name + '</a></li>';
+        let elements = form.querySelectorAll('a');
+
+        for (let element of elements) {
+            element.addEventListener('click', this.onClick);
         }
+    }
 
-        html += '     </ul>';
-        html += '  </div>';
-        html += '</form>';
+    async onClick(e) {
+        let code = this.getAttribute('href');
 
-        this.innerHtml = html;
+
     }
 }
 
-customElements.define('x-language', XLanguage);
-
-
-
-import { registry } from './library/registry.js';
-
-// Language
-let form = document.getElementById('form-language');
-
-const language = form.querySelectorAll('a');
-
-document.addEventListener('DOMContentLoaded', async (e) => {
-    let element = this;
-
-    registry.local.set('language', code);
-
-    language.addEventListener('click', async (e) => {
-        let element = this;
-
-        let code = $(element).attr('href');
-
-        registry.local.set('currency', code);
-    });
-
-});
+customElements.define('common-language', CommonLanguage);

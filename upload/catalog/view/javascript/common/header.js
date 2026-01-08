@@ -1,59 +1,36 @@
-import { WebComponent } from '../index.js';
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XHeader extends WebComponent {
+// library
+const customer = await loader.library('customer');
+
+// Config
+const config = await loader.config('catalog');
+
+// Language
+const language = await loader.language('common/header');
+
+class CommonHeader extends WebComponent {
     async connected() {
-        this.innerHTML = '<p>test desfsedfs</p>';
+        let data = { ...Object.fromEntries(language) };
 
-        this.load.language('common/header');
-
-        let data = [];
-        /*
-        if (this.config.get('config_logo')) {
-            data['logo'] = this.config.get('config_url') + 'image/' + this.config.get('config_logo');
+        if (config.has('config_logo')) {
+            data.logo = config.get('config_url') + 'image/' + config.get('config_logo');
         } else {
-            data['logo'] = '';
+            data.logo = '';
         }
 
-        data['home'] = this.url.link('common/home', 'language=' . this.config.get('config_language'));
+        data.name = config.get('config_name');
+        data.telephone = config.get('config_telephone');
+        data.logged = customer.isLogged();
+        data.wishlist = customer.getWishlist().length;
 
-        let logged = false;
-        let wishlist_total = 0;
+        data.text_wishlist = language.get('text_wishlist').replace('%d', customer.getWishlist().length);
 
-        let customer = this.session.get('customer');
+        console.log();
 
-        if (customer) {
-            logged = true;
-			wishlist_total = customer.wishlist.length;
-		}
-
-        data['telephone'] = this.config.get('config_telephone');
-
-        data['logged'] = logged;
-        data['text_wishlist'] = sprintf(this.language.get('text_wishlist'), wishlist_total);
-
-        /*
-        $data['wishlist'] = $this->url->link('account/wishlist', 'language=' . $this->config->get('config_language') . (isset($this->session->data['customer_token']) ? '&customer_token=' . $this->session->data['customer_token'] : ''));
-
-        if (!$this->customer->isLogged()) {
-            $data['register'] = $this->url->link('account/register', 'language=' . $this->config->get('config_language'));
-            $data['login'] = $this->url->link('account/login', 'language=' . $this->config->get('config_language'));
-        } else {
-            $data['account'] = $this->url->link('account/account', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
-            $data['order'] = $this->url->link('account/order', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
-            $data['transaction'] = $this->url->link('account/transaction', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
-            $data['download'] = $this->url->link('account/download', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
-            $data['logout'] = $this->url->link('account/logout', 'language=' . $this->config->get('config_language'));
-        }
-
-        $data['shopping_cart'] = $this->url->link('checkout/cart', 'language=' . $this->config->get('config_language'));
-        $data['checkout'] = $this->url->link('checkout/checkout', 'language=' . $this->config->get('config_language'));
-        $data['contact'] = $this->url->link('information/contact', 'language=' . $this->config->get('config_language'));
-        */
-        let test = await this.load.template('common/header', data);
-
-        console.log(test);
-        //this.innerHTML = this.load.template('common/header', data);
+        this.innerHTML = await loader.template('common/header', data);
     }
 }
 
-customElements.define('x-header', XHeader);
+customElements.define('common-header', CommonHeader);

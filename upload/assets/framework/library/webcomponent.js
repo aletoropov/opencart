@@ -1,28 +1,7 @@
-import { registry } from '../index.js';
-
 export class WebComponent extends HTMLElement {
-    static registry = null;
-
     constructor() {
         super();
-
-        this.registry = registry;
-        this.load = registry.get('loader');
-
-
-
-        console.log('WebComponent');
-        console.log(this.registry);
-
-
-        //for ([key, value] of registry.all().entries()) {
-        //    this[key] = registry.get();
-        //}
     }
-
-    //get load() {
-    //   return registry.get('loader');
-    //}
 
     connectedCallback() {
         if (this.connected !== undefined) {

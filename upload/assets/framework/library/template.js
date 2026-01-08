@@ -1,14 +1,15 @@
 import '../liquid.browser.umd.js';
 
 export class Template {
+    static instance;
     directory = '';
-    path = [];
+    path = new Map();
     engine = {};
 
     constructor(path) {
         this.engine = new liquidjs.Liquid({
             root: '',
-            extname: '.liquid'
+            extname: '.twig'
         });
     }
 
@@ -16,12 +17,12 @@ export class Template {
         if (!path) {
             this.directory = namespace;
         } else {
-            this.path[namespace] = path;
+            this.path.set(namespace, path);
         }
     }
 
-    async render(path, data = []) {
-        let file = this.directory + path + '.json';
+    async render(path, data = {}) {
+        let file = this.directory + path + '.twig';
         let namespace = '';
         let parts = path.split('/');
 
@@ -32,11 +33,26 @@ export class Template {
                 namespace += '/' + part;
             }
 
-            if (this.path[namespace] !== undefined) {
-                file = this.path[namespace] + path.substr(path, namespace.length) + '.json';
+            if (this.path.has(namespace)) {
+                file = this.path.get(namespace) + path.substr(path, namespace.length) + '.twig';
             }
         }
 
+
+
+
         return this.engine.renderFile(file, data);
     }
+
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new Template();
+        }
+
+        return this.instance;
+    }
 }
+
+const template = Template.getInstance();
+
+export default template;

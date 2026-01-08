@@ -1,4 +1,4 @@
-import { WebComponent } from '../library/webcomponent.js';
+import { WebComponent } from '../component.js';
 
 class XDatetime extends WebComponent {
     static observed = ['format', 'value'];
@@ -28,7 +28,7 @@ class XDatetime extends WebComponent {
             let date = new Date(Date.parse(this.value));
 
             console.log(date);
-            console.log(new Intl.DateTimeFormat("en-US").format(date));
+            console.log(new Intl.DateTimeFormat('en-US').format(date));
 
             this.innerHTML = string;
         }

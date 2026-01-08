@@ -1,26 +1,27 @@
-class XAddress extends WebComponent {
-    data = [];
+import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
+const language = await loader.language('account/address');
+
+class AccountAddress extends WebComponent {
     async connected() {
-        this.load.language('account/address');
+        this.innerHTML = await this.load.template('account/address', { ...language });
 
-        this.innerHtml = this.load.template('account/address', this.language.all());
+        let buttons = this.querySelectorAll('.btn-danger');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', this.onClick);
+        });
+    }
+
+    onClick(e) {
+
     }
 }
 
-customElements.define('x-address', XAddress);
+customElements.define('account-address', AccountAddress);
 
 const address = document.getElementById('address');
-
-const buttons = address.querySelectorAll('.btn-danger');
-
-const onclick = (e) => {
-
-};
-
-buttons.addEventListener('click', onclick);
-
-const language = session.get('language');
 
 $('#address').on('click', '.btn-danger', function(e) {
     e.preventDefault();

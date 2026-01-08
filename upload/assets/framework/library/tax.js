@@ -1,18 +1,21 @@
-export class Tax {
-    static tax_classes = {};
+import { loader } from './loader.js';
 
-    constructor(registry) {
-        this.storage = registry.get('storage');
+class Tax {
+    static instance;
+    static tax_classes = new Map();
+
+    constructor(loader) {
+        this.storage = loader.library('storage');
 
         //this.tax_classes = tax_classes;
 
-        this.load(3);
+        //this.load(3);
     }
 
     async load(geo_zone_id) {
         let tax_rates = await this.storage.fetch('localisation/tax_rate-' + geo_zone_id);
 
-        console.log(tax_rates);
+        //console.log(tax_rates);
 
         let tax_classes = [];
 
@@ -32,9 +35,7 @@ export class Tax {
 
             }
 
-
             tax_classes[tax_class_id] = [customer_group_id] + [tax_rule_id];
-
 
             if (tax_classes[tax_class_id][customer_group_id] == undefined) {
              //   this.tax_classes[tax_class_id][customer_group_id] = [];
@@ -110,4 +111,16 @@ export class Tax {
     clear() {
         this.tax_classes = [];
     }
+
+    static getInstance(loader) {
+        if (!this.instance) {
+            this.instance = new Tax(loader);
+        }
+
+        return this.instance;
+    }
 }
+
+const tax = Tax.getInstance(loader);
+
+export default tax;

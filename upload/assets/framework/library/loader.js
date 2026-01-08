@@ -1,58 +1,80 @@
-import { registry } from './registry.js';
-import { factory } from './factory.js';
+import { event } from './event.js';
 
-export class Loader {
+class Loader {
     static instance;
-    registry = null;
-    factory = null;
+    data = new Map();
 
-    constructor(registry) {
-        this.registry = registry;
-        this.factory = this.registry.get('factory');
+    constructor(event) {
+        this.event = event;
     }
 
-    config(path) {
-        this.registry.get('config').load(path);
+    async config(path) {
+        this.event.trigger('config/' + path + '/before', { path });
+
+        let output = await this.data.get('config').fetch(path);
+
+        this.event.trigger('config/' + path + '/after', { path, output });
+
+        return output;
     }
 
-    storage(path) {
-        return this.registry.get('storage').fetch(path);
+    async storage(path) {
+        this.event.trigger('storage/' + path + '/before', { path });
+
+        let output = await this.data.get('storage').fetch(path);
+
+        this.event.trigger('storage/' + path + '/after', { path, output });
+
+        return output;
     }
 
-    language(path) {
-        this.registry.get('language').load(path);
+    async language(path) {
+        this.event.trigger('language/' + path + '/before', { path });
+
+        let output = await this.data.get('language').fetch(path);
+
+        this.event.trigger('language/' + path + '/after', { path, output });
+
+        return output;
     }
 
-    template(path, data = []) {
-        return this.registry.get('template').render(path, data);
+    async template(path, data = {}) {
+        this.event.trigger('template/' + path + '/before', { path, data });
+
+        let output = await this.data.get('template').render(path, data);
+
+        this.event.trigger('template/' + path + '/after', { path, data, output });
+
+        return output;
     }
 
-    async library(key, config = {}) {
-        if (this.registry.has(key)) {
-            return;
+    async library(path) {
+        this.event.trigger('library/' + path + '/before', { path });
+
+        if (this.data.has(path)) {
+            return this.data.get(path);
         }
 
-        if (this.factory.has(key)) {
-            this.registry.set(key, await this.factory.get(key).bind({ registry: this.registry }).apply(config));
-        }
+        let object = await import('./' + path + '.js');
+
+        this.data.set(path, object.default);
+
+        let output = this.data.get(path);
+
+        this.event.trigger('library/' + path + '/after', { path, output });
+
+        return output;
     }
 
-    static getInstance(registry) {
+    static getInstance(event) {
         if (!this.instance) {
-            this.instance = new Loader(registry);
-
-
+            this.instance = new Loader(event);
         }
 
         return this.instance;
     }
 }
 
-// Set the factory object so it can be used by the loader
-registry.set('factory', factory);
-
-const loader = Loader.getInstance(registry);
-
-registry.set('loader', loader);
+const loader = Loader.getInstance(event);
 
 export { loader };
