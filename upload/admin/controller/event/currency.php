@@ -6,32 +6,26 @@ namespace Opencart\Admin\Controller\Event;
  * @package Opencart\Admin\Controller\Event
  */
 class Currency extends \Opencart\System\Engine\Controller {
-	/**
-	 * Index
-	 *
-	 * Auto update currencies
-	 *
-	 * Called using model/setting/setting/editSetting/after
-	 *
-	 * @param string            $route
-	 * @param array<int, mixed> $args
-	 * @param mixed             $output
-	 *
-	 * @return void
-	 */
-	public function refresh(string &$route, array &$args, &$output) {
-		if (!$this->config->get('config_currency_auto') || $route != 'setting/setting.editSetting') {
-			return;
-		}
-
+	public function addCurrency(string &$route, array &$args, &$output): void {
 		$task_data = [
-			'code'   => 'currency',
-			'action' => 'task/admin/currency.refresh',
+			'code'   => 'currency.list',
+			'action' => 'task/catalog/currency.list',
 			'args'   => []
 		];
 
 		$this->load->model('setting/task');
 
 		$this->model_setting_task->addTask($task_data);
+
+		/*
+		// Admin
+		$task_data = [
+			'code'   => 'admin.currency.list',
+			'action' => 'task/admin/currency.list',
+			'args'   => []
+		];
+
+		$this->model_setting_task->addTask($task_data);
+		*/
 	}
 }
