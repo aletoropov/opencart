@@ -1,8 +1,7 @@
-export class Storage {
-    static instance = null;
+export default class Storage {
     directory = '';
     path = new Map();
-    loaded = new Map();
+    data = new Map();
 
     addPath(namespace, path = '') {
         if (!path) {
@@ -13,8 +12,8 @@ export class Storage {
     }
 
     async fetch(path) {
-        if (this.loaded.has(path)) {
-            return this.loaded.get(path);
+        if (this.data.has(path)) {
+            return this.data.get(path);
         }
 
         let file = this.directory + path + '.json';
@@ -38,15 +37,13 @@ export class Storage {
         if (response.status == 200) {
             let data = await response.json();
 
-            this.loaded.set(path, new Map(Object.entries(data)));
+            this.data.set(path, data);
 
-            return this.loaded.get(path);
+            return this.data.get(path);
         } else {
             console.log('Could not load storage file ' + path);
         }
 
-        return new Map();
+        return {};
     }
 }
-
-export default Storage;

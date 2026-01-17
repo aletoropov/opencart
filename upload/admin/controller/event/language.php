@@ -21,24 +21,8 @@ class Language extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function index(string &$route, array &$args, &$output): void {
-		$pos = strpos($route, '.');
-
-		if ($pos == false) {
-			return;
-		}
-
-		$method = substr($route, 0, $pos);
-
-		$callable = [$this, $method];
-
-		if (is_callable($callable)) {
-			$callable($route, $args, $output);
-		}
-	}
-
-	public function addd(string &$route, array &$args, &$output): void {
 		$task_data = [
-			'code'   => 'language',
+			'code'   => 'language.list',
 			'action' => 'task/catalog/language',
 			'args'   => []
 		];
@@ -48,7 +32,7 @@ class Language extends \Opencart\System\Engine\Controller {
 		$this->model_setting_task->addTask($task_data);
 
 		$task_data = [
-			'code'   => 'language',
+			'code'   => 'language.list',
 			'action' => 'task/admin/language',
 			'args'   => []
 		];

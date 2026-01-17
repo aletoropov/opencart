@@ -1,12 +1,12 @@
-import { nunjucks } from '../nunjucks.min.js';
+import '../liquid.browser.min.js';
 
-export class Template {
-    static instance;
+export default class Template {
+    engine = {};
     directory = '';
     path = new Map();
-    engine = {};
+    loaded = new Map();
 
-    constructor(path) {
+    constructor() {
         this.engine = new liquidjs.Liquid({
             root: '',
             extname: '.twig'
@@ -21,7 +21,7 @@ export class Template {
         }
     }
 
-    async render(path, data = {}) {
+    async fetch(path) {
         let file = this.directory + path + '.twig';
         let namespace = '';
         let parts = path.split('/');
@@ -38,8 +38,29 @@ export class Template {
             }
         }
 
-        return nunjucks.render(file, data);
+        let response = await fetch(file);
+
+        if (response.status == 200) {
+            let object = await response.text();
+
+            this.loaded.set(path, object);
+
+            return this.loaded.get(path);
+        } else {
+            console.log('Could not load template file ' + path);
+        }
+
+        return '';
+    }
+
+    parse(code, data = {}) {
+        return this.engine.parseAndRender(code, data);
+    }
+
+    async render(path, data = {}) {
+        //console.log(path);
+        //console.log(data);
+
+        return this.parse(await this.fetch(path), data);
     }
 }
-
-export default Template;

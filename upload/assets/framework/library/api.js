@@ -1,9 +1,14 @@
-export class Request {
+export default class Api {
+    fetch(request, response) {
+
+
+    }
+
     async get(config) {
 
     }
 
-    async post(option) {
+    async post(option, data = {}) {
         /*
         if (!config.method) {
             config.method = 'get';
@@ -39,5 +44,3 @@ export class Request {
 
     }
 }
-
-export default Request;

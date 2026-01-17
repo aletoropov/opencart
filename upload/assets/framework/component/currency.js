@@ -1,7 +1,11 @@
 import { WebComponent } from '../component.js';
 
 class XCurrency extends WebComponent {
-    static observed = ['code', 'amount', 'value'];
+    static observed = [
+        'code',
+        'amount',
+        'value'
+    ];
     currencies = [];
 
     get code() {
@@ -61,9 +65,9 @@ class XCurrency extends WebComponent {
     }
 
     async connected() {
-        this.addEventListener('[code]', this.event.format);
-        this.addEventListener('[amount]', this.event.format);
-        this.addEventListener('[value]', this.event.format);
+        this.addEventListener('[code]', this.render);
+        this.addEventListener('[amount]', this.render);
+        this.addEventListener('[value]', this.render);
 
         let response = this.storage.fetch('localisation/currency');
 
@@ -75,7 +79,7 @@ class XCurrency extends WebComponent {
         this.currencies = currencies;
     }
 
-    format() {
+    render() {
         this.innerHTML = this.currency.format(this.value, this.code);
     }
 }

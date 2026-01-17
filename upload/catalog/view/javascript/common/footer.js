@@ -10,25 +10,24 @@ const language = await loader.language('common/footer');
 // Storage
 const articles = await loader.storage('cms/article-1');
 
+// Information
 const informations = await loader.storage('information/information');
-
-const date = new Date();
 
 class CommonFooter extends WebComponent {
     async connected() {
-        let data = { ...Object.fromEntries(language) };
+        let data = {};
 
         // Articles
-        data.articles = articles.values();
+        data.articles = Object.values(articles).length;
 
         // Information Pages
-        data.informations = informations.values();
+        data.informations = Object.values(informations);
 
-        data.config_name = config.get('config_name');
+        let date = new Date();
 
         data.year = date.getFullYear();
 
-        this.innerHTML = await loader.template('common/footer', data);
+        this.innerHTML = await loader.template('common/footer', { ...data, ...language, ...config });
     }
 }
 

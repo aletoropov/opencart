@@ -6,10 +6,27 @@ namespace Opencart\Admin\Controller\Event;
  * @package Opencart\Admin\Controller\Event
  */
 class Currency extends \Opencart\System\Engine\Controller {
-	public function addCurrency(string &$route, array &$args, &$output): void {
+	/*
+	 * Index
+	 *
+	 * Adds task to generate new currency data.
+	 *
+	 * Called using
+	 *
+	 * admin/model/localisation/currency/addCategory/after
+	 * admin/model/localisation/currency/editCategory/after
+	 * admin/model/localisation/currency/deleteCategory/after
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 * @param array<string, string> $output
+	 *
+	 * @return void
+	 */
+	public function index(string &$route, array &$args, &$output): void {
 		$task_data = [
 			'code'   => 'currency.list',
-			'action' => 'task/catalog/currency.list',
+			'action' => 'task/catalog/currency',
 			'args'   => []
 		];
 
@@ -20,8 +37,8 @@ class Currency extends \Opencart\System\Engine\Controller {
 		/*
 		// Admin
 		$task_data = [
-			'code'   => 'admin.currency.list',
-			'action' => 'task/admin/currency.list',
+			'code'   => 'admin.currency',
+			'action' => 'task/admin/currency',
 			'args'   => []
 		];
 

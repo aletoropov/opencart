@@ -6,22 +6,19 @@ namespace Opencart\Admin\Controller\Event;
  * @package Opencart\Admin\Controller\Event
  */
 class Option extends \Opencart\System\Engine\Controller {
-	public function index(string &$route, array &$args, &$output): void {
-		$pos = strpos($route, '.');
-
-		if ($pos == false) {
-			return;
-		}
-
-		$method = substr($route, 0, $pos);
-
-		$callable = [$this, $method];
-
-		if (is_callable($callable)) {
-			$callable($route, $args, $output);
-		}
-	}
-
+	/*
+	 * Edit Option
+	 *
+	 * Adds task to generate new product data.
+	 *
+	 * Called using admin/model/catalog/option.editOption/after
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 * @param array<string, string> $output
+	 *
+	 * @return void
+	 */
 	public function editOption(string &$route, array &$args, &$output): void {
 		$this->load->model('catalog/product');
 
@@ -40,6 +37,19 @@ class Option extends \Opencart\System\Engine\Controller {
 		}
 	}
 
+	/*
+	 * Delete Option
+	 *
+	 * Adds task to generate new product data.
+	 *
+	 * Called using admin/model/catalog/option.deleteOption/after
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 * @param array<string, string> $output
+	 *
+	 * @return void
+	 */
 	public function deleteOption(string &$route, array &$args, &$output): void {
 		$this->load->model('catalog/product');
 

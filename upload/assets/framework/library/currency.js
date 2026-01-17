@@ -2,15 +2,11 @@ import { loader } from './loader.js';
 
 const currencies = await loader.storage('localisation/currencies');
 
-class Currency {
-    static instance = null;
+export default class Currency {
     static currencies = {};
 
     async constructor() {
         this.currencies = new Map(currencies.toArray());
-
-        console.log('hi');
-        console.log(this.currencies);
     }
 
     format(number, code, value = 0, format = true) {
@@ -69,5 +65,3 @@ class Currency {
         return value * (this.currencies.get(to).value / this.currencies.get(from).value);
     }
 }
-
-export default Currency;

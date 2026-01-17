@@ -6,22 +6,19 @@ namespace Opencart\Admin\Controller\Event;
  * @package Opencart\Admin\Controller\Event
  */
 class Information extends \Opencart\System\Engine\Controller {
-	public function index(string &$route, array &$args, &$output): void {
-		$pos = strpos($route, '.');
-
-		if ($pos == false) {
-			return;
-		}
-
-		$method = substr($route, 0, $pos);
-
-		$callable = [$this, $method];
-
-		if (is_callable($callable)) {
-			$callable($route, $args, $output);
-		}
-	}
-
+	/**
+	 * Add Information
+	 *
+	 * Adds task to generate new information data.
+	 *
+	 * Called using model/catalog/information/addInformation/after
+	 *
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
+	 *
+	 * @return void
+	 */
 	public function addInformation(string &$route, array &$args, &$output): void {
 		$task_data = [
 			'code'   => 'information.info.' . $output,
@@ -34,6 +31,19 @@ class Information extends \Opencart\System\Engine\Controller {
 		$this->model_setting_task->addTask($task_data);
 	}
 
+	/**
+	 * Edit Information
+	 *
+	 * Adds task to generate new information data.
+	 *
+	 * Called using model/catalog/information/addInformation/after
+	 *
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
+	 *
+	 * @return void
+	 */
 	public function editInformation(string &$route, array &$args, &$output): void {
 		$task_data = [
 			'code'   => 'information.info.' . $args[0],
@@ -46,6 +56,19 @@ class Information extends \Opencart\System\Engine\Controller {
 		$this->model_setting_task->addTask($task_data);
 	}
 
+	/**
+	 * Delete Information
+	 *
+	 * Adds task to generate new information data.
+	 *
+	 * Called using model/catalog/information/deleteInformation/after
+	 *
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
+	 *
+	 * @return void
+	 */
 	public function deleteInformation(string &$route, array &$args, &$output): void {
 		$task_data = [
 			'code'   => 'information.delete.' . $args[0],

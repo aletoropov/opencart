@@ -1,1 +1,129 @@
 <?php
+namespace Opencart\Admin\Controller\Event;
+/**
+ * Class Geo Zone
+ *
+ * @package Opencart\Admin\Controller\Event
+ */
+class GeoZone extends \Opencart\System\Engine\Controller {
+	/**
+	 * Add Zone
+	 *
+	 * Generate new country info page with added zone.
+	 *
+	 * Called using admin/model/localisation/geo_zone/addGeoZone
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 *
+	 * @return void
+	 */
+	public function addGeoZone(string &$route, array &$args, &$output): void {
+		$this->load->model('setting/task');
+
+		$this->load->model('localisation/geo_zone');
+
+		$results = $this->model_localisation_geo_zone->getGeoZones();
+
+		foreach ($results as $result) {
+			$task_data = [
+				'code'   => 'tax_rate.info.' . $args[1]['country_id'],
+				'action' => 'task/catalog/tax_rate.info',
+				'args'   => ['country_id' => $args[1]['country_id']]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
+
+		/*
+		// Admin
+		$task_data = [
+			'code'   => 'country',
+			'action' => 'task/admin/country.list',
+			'args'   => []
+		];
+
+		$this->model_setting_task->addTask($task_data);
+
+		$task_data = [
+			'code'   => 'country',
+			'action' => 'task/admin/country.info',
+			'args'   => ['country_id' => $output]
+		];
+
+		$this->model_setting_task->addTask($task_data);
+		*/
+	}
+
+	/**
+	 * Edit Zone
+	 *
+	 * Generate new country info page with updated zone.
+	 *
+	 * Called using admin/model/localisation/zone/editZone
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 *
+	 * @return void
+	 */
+	public function editZone(string &$route, array &$args, &$output): void {
+		$task_data = [
+			'code'   => 'country.info.' . $args[1]['country_id'],
+			'action' => 'task/catalog/country.info',
+			'args'   => ['country_id' => $args[1]['country_id']]
+		];
+
+		$this->load->model('setting/task');
+
+		$this->model_setting_task->addTask($task_data);
+		/*
+		// Admin
+		$task_data = [
+			'code'   => 'country',
+			'action' => 'task/admin/country.list',
+			'args'   => []
+		];
+
+		$this->model_setting_task->addTask($task_data);
+
+		$task_data = [
+			'code'   => 'country',
+			'action' => 'task/admin/country.info',
+			'args'   => ['country_id' => $args[0]]
+		];
+
+		$this->model_setting_task->addTask($task_data);
+		*/
+	}
+
+	/**
+	 * Delete Zone
+	 *
+	 * Generate new country info page with deleted zone.
+	 *
+	 * Called using admin/model/localisation/zone/deleteZone
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 *
+	 * @return void
+	 */
+	public function deleteZone(string &$route, array &$args, &$output): void {
+		$this->load->model('localisation/zone');
+
+		$zone_info = $this->model_localisation_zone->getZone($args[0]);
+
+		if ($zone_info) {
+			$task_data = [
+				'code'   => 'country.info.' . $zone_info['country_id'],
+				'action' => 'task/admin/country.info',
+				'args'   => ['country_id' => $zone_info['country_id']]
+			];
+
+			$this->load->model('setting/task');
+
+			$this->model_setting_task->addTask($task_data);
+		}
+	}
+}

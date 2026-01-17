@@ -1,58 +1,34 @@
 import { WebComponent } from '../component.js';
 import { loader } from '../index.js';
 
-// library
-const session = await loader.library('session');
-
 // Config
 const config = await loader.config('catalog');
 
 // Language
 const language = await loader.language('account/register');
 
+// customer groups
+let customer_groups = await loader.storage('customer/customer_group');
+
 class AccountRegister extends WebComponent {
     async connected() {
-        let data = { ...language };
+        let data = {};
 
-        data.text_account_already = language.get('text_account_already').replace('%s', 'route=account/login');
-
-        data.customer_groups = config.get('config_customer_group_list');
-        data.customer_group_id = config.get('config_customer_group_id');
-
-        data.error_upload_size = language.get('error_upload_size').replace('%s', config.get('config_file_max_size'));
-
-        data.config_telephone_status = config.get('config_telephone_status');
-        data.config_telephone_required = config.get('config_telephone_required');
-
-        data.customer_group_id = config.get('config_customer_group_id');
-
-        if (session.has('customer')) {
-            data.customer_group_id = customer.get('customer_group_id');
-        }
-
-        data.custom_fields = {};
+        data.customer_groups = customer_groups;
 
         // Custom Fields
-        let customer_group = await loader.storage('customer/customer_group-' + data.customer_group_id);
+        data.custom_fields = {};
 
-        if (customer_group) {
-            data.custom_fields = customer_group.get('custom_field');
+        let customer_group = await loader.storage('customer/customer_group-' + config.config_customer_group_id);
+
+        if (customer_group.length) {
+            data.custom_fields = customer_group.custom_fields;
         }
 
-        // Information
-        let information_info = await loader.storage('catalog/information-' + config.get('config_account_id'));
+        let response = loader.template('account/register', { ...data, ...language, ...config });
 
-        if (information_info) {
-            data.text_agree = language.get('text_agree').replace('%s', 'information/information.info&information_id=' + config.config_account_id).replace('%s', information_info.title);
-        } else {
-            data.text_agree = '';
-        }
-
-        let response = loader.template('account/register', data);
-
-        response.then(this.render);
-        response.then(this.addEvent);
-
+        response.then(this.render.bind(this));
+        response.then(this.addEvent.bind(this));
     }
 
     render(html) {
@@ -68,29 +44,12 @@ class AccountRegister extends WebComponent {
         // Set up the customer group
         let customer_group = document.getElementById('input-customer-group');
 
-        console.log(customer_group);
-
-        customer_group.addEventListener('change', this.onChange);
-
-        // Set up the agree button enabled / disabled
-        let agree = document.getElementById('input-agree');
-
-        agree.addEventListener('change', this.onAgree);
-    }
-
-    onAgree(e) {
-        let button = document.getElementById('button-continue');
-
-        if (e.value == 1) {
-            button.addAttribute('disabled');
-        } else {
-            button.disabled = true;
+        if (customer_group) {
+            customer_group.addEventListener('change', this.onChange);
         }
     }
 
     async onChange() {
-        //fetch();
-
         ///$this->url->link('account/account', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true)
 
         let customer_group_info = await this.storage.fetch('customer/customer_group-' + data['customer_group_id']);
@@ -137,31 +96,3 @@ class AccountRegister extends WebComponent {
 }
 
 customElements.define('account-register', AccountRegister);
-
-/*
-$('#input-customer-group').on('change', function() {
-    $.ajax({
-        url: 'index.php?route=account/custom_field&customer_group_id=' + this.value + '&language={{ language }}',
-        dataType: 'json',
-        success: function(json) {
-            $('.custom-field').hide();
-            $('.custom-field').removeClass('required');
-
-            for (i = 0; i < json.length; i++) {
-                custom_field = json[i];
-
-                $('.custom-field-' + custom_field['custom_field_id']).show();
-
-                if (custom_field['required']) {
-                    $('.custom-field-' + custom_field['custom_field_id']).addClass('required');
-                }
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError) {
-            console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
-        }
-    });
-});
-
-$('#input-customer-group').trigger('change');
-*/

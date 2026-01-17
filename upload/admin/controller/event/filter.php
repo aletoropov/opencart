@@ -6,22 +6,19 @@ namespace Opencart\Admin\Controller\Event;
  * @package Opencart\Admin\Controller\Event
  */
 class Filter extends \Opencart\System\Engine\Controller {
-	public function index(string &$route, array &$args, &$output): void {
-		$pos = strpos($route, '.');
-
-		if ($pos == false) {
-			return;
-		}
-
-		$method = substr($route, 0, $pos);
-
-		$callable = [$this, $method];
-
-		if (is_callable($callable)) {
-			$callable($route, $args, $output);
-		}
-	}
-
+	/*
+	 * Edit Filter
+	 *
+	 * Adds task to generate new product data.
+	 *
+	 * Called using admin/model/catalog/filter.editFilter/after
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 * @param array<string, string> $output
+	 *
+	 * @return void
+	 */
 	public function editFilter(string &$route, array &$args, &$output): void {
 		$this->load->model('catalog/product');
 
@@ -40,6 +37,19 @@ class Filter extends \Opencart\System\Engine\Controller {
 		}
 	}
 
+	/*
+	 * Delete Filter
+	 *
+	 * Adds task to generate new product data.
+	 *
+	 * Called using admin/model/catalog/filter.deleteFilter/after
+	 *
+	 * @param string                $route
+	 * @param array<string, string> $args
+	 * @param array<string, string> $output
+	 *
+	 * @return void
+	 */
 	public function deleteFilter(string &$route, array &$args, &$output): void {
 		$this->load->model('catalog/product');
 

@@ -1,5 +1,4 @@
-class Db {
-    static instance = null;
+export default class Db {
     db = null;
     data = [];
     event  = {
@@ -49,5 +48,3 @@ class Db {
 
     }
 }
-
-export default Db;

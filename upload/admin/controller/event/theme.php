@@ -7,12 +7,60 @@ namespace Opencart\Admin\Controller\Event;
  */
 class Theme extends \Opencart\System\Engine\Controller {
 	/**
-	 * Index
+	 * Add Theme
 	 *
 	 * Adds task to generate new theme list
 	 *
 	 * model/design/theme/addTheme/after
+	 *
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
+	 *
+	 * @return void
+	 */
+	public function addTheme(string &$route, array &$args, &$output): void {
+		$task_data = [
+			'code'   => 'theme.info.' . str_replace('/', '.', $args[0]['route']),
+			'action' => 'task/catalog/theme.info',
+			'args'   => ['route' => $args[0]['route']]
+		];
+
+		$this->load->model('setting/task');
+
+		$this->model_setting_task->addTask($task_data);
+	}
+
+	/**
+	 * Edit Theme
+	 *
+	 * Adds task to generate new theme list
+	 *
 	 * model/design/theme/editTheme/after
+	 *
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
+	 *
+	 * @return void
+	 */
+	public function editTheme(string &$route, array &$args, &$output): void {
+		$task_data = [
+			'code'   => 'theme.info.' . str_replace('/', '.', $args[0]['route']),
+			'action' => 'task/catalog/theme.info',
+			'args'   => ['route' => $args[0]['route']]
+		];
+
+		$this->load->model('setting/task');
+
+		$this->model_setting_task->addTask($task_data);
+	}
+
+	/**
+	 * Delete Theme
+	 *
+	 * Adds task to generate new theme list
+	 *
 	 * model/design/theme/deleteTheme/after
 	 *
 	 * @param string            $route
@@ -21,27 +69,11 @@ class Theme extends \Opencart\System\Engine\Controller {
 	 *
 	 * @return void
 	 */
-	public function index(string &$route, array &$args, &$output): void {
-		$pos = strpos($route, '.');
-
-		if ($pos == false) {
-			return;
-		}
-
-		$method = substr($route, 0, $pos);
-
-		$callable = [$this, $method];
-
-		if (is_callable($callable)) {
-			$callable($route, $args, $output);
-		}
-	}
-
-	public function index(string &$route, array &$args, &$output): void {
+	public function deleteTheme(string &$route, array &$args, &$output): void {
 		$task_data = [
-			'code'   => 'theme',
-			'action' => 'task/admin/theme',
-			'args'   => []
+			'code'   => 'theme.delete.' . str_replace('/', '.', $args[0]['route']),
+			'action' => 'task/catalog/theme.delete',
+			'args'   => ['route' => $args[0]['route']]
 		];
 
 		$this->load->model('setting/task');

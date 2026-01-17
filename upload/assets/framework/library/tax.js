@@ -1,7 +1,6 @@
 import { loader } from './loader.js';
 
-class Tax {
-    static instance;
+export default class Tax {
     static tax_classes = new Map();
 
     constructor() {
@@ -33,7 +32,7 @@ class Tax {
 
             if (tax_classes[tax_class_id][customer_group_id] == undefined) {
 
-            }
+            }tax_class_id
 
             tax_classes[tax_class_id] = [customer_group_id] + [tax_rule_id];
 
@@ -112,5 +111,3 @@ class Tax {
         this.tax_classes = [];
     }
 }
-
-export default Tax;

@@ -1,6 +1,9 @@
 import { WebComponent } from '../component.js';
 import { loader } from '../index.js';
 
+// library
+const local = await loader.library('local');
+
 // Config
 const config = await loader.config('catalog');
 
@@ -10,21 +13,29 @@ const language = await loader.language('common/language');
 // Storage
 const languages = await loader.storage('localisation/language');
 
-// URL
-const url = new URLSearchParams(document.location.search);
-
 class CommonLanguage extends WebComponent {
-    language = languages;
-
     connected() {
-        let data = { ...Object.fromEntries(language) };
+        let data = {};
 
-        // lang
-        data.code = document.documentElement.lang.toLowerCase();
+        // Config stored language code
+        data.code = config.config_language;
 
-        data.languages = this.language.values();
+        // Local storage language code
+        if (local.has('language')) {
+            data.code = local.get('language');
+        }
 
-        let response = loader.template('common/language', data);
+        if (data.code in languages) {
+            data.name = languages[data.code].name;
+            data.image = languages[data.code].image;
+        } else {
+            data.name = '';
+            data.image = '';
+        }
+
+        data.languages = Object.values(languages);
+
+        let response = loader.template('common/language', { ...data,  ...language });
 
         response.then(this.render.bind(this));
         response.then(this.addEvent.bind(this));
@@ -35,7 +46,7 @@ class CommonLanguage extends WebComponent {
     }
 
     addEvent() {
-        let form = document.querySelector('#form-language');
+        let form = document.getElementById('form-language');
 
         let elements = form.querySelectorAll('a');
 
@@ -45,9 +56,7 @@ class CommonLanguage extends WebComponent {
     }
 
     async onClick(e) {
-        let code = this.getAttribute('href');
-
-
+        local.set('language', e.target.getAttribute('href'));
     }
 }
 
