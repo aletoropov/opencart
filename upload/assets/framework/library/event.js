@@ -10,10 +10,14 @@
  */
 class Event {
     static instance;
-    data = new Map();
+
+    constructor() {
+        this.data = new Map();
+    }
 
     /**
      * Register a handler for an event (trigger)
+     *
      * @param {string} trigger - The trigger name, e.g. 'catalog/controller/common/header/before'
      * @param {Function} callback - The handler function
      * @param {number} [priority=0] - Higher priority runs first (like sort_order in OpenCart)
@@ -35,6 +39,7 @@ class Event {
     /**
      * Trigger an event - calls all registered handlers in priority order
      * Args are passed by reference where possible (objects/arrays are mutable like PHP &)
+     *
      * @param {string} trigger
      * @param {...any} args - Arguments passed to handlers (mutable objects act like references)
      */
@@ -67,4 +72,4 @@ class Event {
 
 const event = Event.getInstance();
 
-export { event, event as default };
+export { event };

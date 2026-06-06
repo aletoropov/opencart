@@ -1,28 +1,15 @@
 <?php
 namespace Opencart\Admin\Controller\Event;
 /**
- * Class Currency
+ * Class Setting
  *
  * @package Opencart\Admin\Controller\Event
  */
 class Setting extends \Opencart\System\Engine\Controller {
-
-	public function index(string &$route, array &$args, &$output): void {
-
-
-
-
-
-
-
-	}
-
 	/**
-	 * Refresh
+	 * Update data related to settings.
 	 *
-	 * Auto update currencies
-	 *
-	 * Called using model/setting/setting/editSetting/after
+	 * Trigger model/setting/setting/editSetting/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -30,19 +17,56 @@ class Setting extends \Opencart\System\Engine\Controller {
 	 *
 	 * @return void
 	 */
-	public function refresh(string &$route, array &$args, &$output) {
-		if (!$this->config->get('config_currency_auto') || $route != 'setting/setting.editSetting') {
-			return;
+	public function index(string &$route, array &$args, &$output): void {
+		if ($route != 'setting/setting.editSetting') {
+			// Location
+			$task_data = [
+				'code'   => 'location',
+				'action' => 'task/catalog/location',
+				'args'   => []
+			];
+
+			$this->load->model('setting/task');
+
+			$this->model_setting_task->addTask($task_data);
+
+			// Language
+			$task_data = [
+				'code'   => 'language',
+				'action' => 'task/catalog/language',
+				'args'   => []
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			// Currency
+			if ($this->config->get('config_currency_auto')) {
+				$task_data = [
+					'code'   => 'currency',
+					'action' => 'task/catalog/currency',
+					'args'   => []
+				];
+
+				$this->model_setting_task->addTask($task_data);
+			}
+
+			// Country
+			$task_data = [
+				'code'   => 'country',
+				'action' => 'task/catalog/country',
+				'args'   => []
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			// Customer Group
+			$task_data = [
+				'code'   => 'customer_group',
+				'action' => 'task/catalog/customer_group',
+				'args'   => []
+			];
+
+			$this->model_setting_task->addTask($task_data);
 		}
-
-		$task_data = [
-			'code'   => 'currency',
-			'action' => 'task/admin/currency.refresh',
-			'args'   => []
-		];
-
-		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
 	}
 }

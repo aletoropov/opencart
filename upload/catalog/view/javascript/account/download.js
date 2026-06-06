@@ -1,16 +1,14 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
-const language = loader.language('account/download');
+const language = await loader.language('account/download');
 
-class AccountDownload extends WebComponent {
-    async connected() {
+export default class extends Controller {
+    render() {
         let data = {};
 
         data.downloads = {};
 
-        this.innerHTML = this.load.template('account/download', { ...data, ...language });
+        return loader.template('account/download', { ...data, ...language });
     }
 }
-
-customElements.define('account-download', AccountDownload);

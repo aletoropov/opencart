@@ -1,4 +1,4 @@
-import { loader } from '../../../assets/framework/index.js';
+import { loader } from '../../../assets/framework/library/loader.js';
 
 // Base
 const base = new URL(document.querySelector('base').href);
@@ -12,7 +12,12 @@ const config = await loader.library('config');
 config.addPath('catalog/view/data/');
 
 // Testing Code
-config.data.set('catalog', {
+config.cache.set('default', {
+    config_path: base + 'catalog/view/javascript/',
+    config_name: 'OpenCart Store',
+    config_logo: 'catalog/opencart-logo.png',
+    config_url: 'http://localhost/opencart-master/upload/',
+    config_telephone: '01234 567890',
     config_language: 'en-gb',
     config_currency: 'EUR',
     config_customer_group_id: 1,
@@ -28,12 +33,15 @@ local.set('currency', 'EUR');
 // Language
 const language = await loader.library('language');
 
-language.addPath('catalog/view/language/' + base.host + '/' + lang + '/');
+language.addPath('catalog/view/language/' + base.host + '/' + local.get('language') + '/');
 
 // Storage
 const storage = await loader.library('storage');
 
-storage.addPath('catalog/view/data/' + base.host + '/' + lang + '/');
+storage.addPath('catalog/view/data/' + base.host + '/');
+
+storage.cache.set('cms/article-1', { articles: [] });
+storage.cache.set('catalog/information', { information: [] });
 
 // Template
 const template = await loader.library('template');
@@ -49,9 +57,9 @@ event.register(/language\/.+\/after/g, ({ path, output }) => {
     //let data = language.fetch('default');
 
     //for (let key in data) {
-    //    if (output[key] == undefined) {
-    //        output[key] = data[key];
-    //   }
+    //  if (output[key] == undefined) {
+    //      output[key] = data[key];
+    //  }
     //}
 });
 
@@ -67,6 +75,6 @@ event.register(/template\/.+\/before/g, ({ path, data }) => {
     //}
 });
 
-export { loader };
-
 import './component.js';
+
+export { loader };

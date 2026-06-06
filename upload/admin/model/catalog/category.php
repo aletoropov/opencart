@@ -219,12 +219,7 @@ class Category extends \Opencart\System\Engine\Model {
 			$path = implode('_', [$path_new, substr($result['value'], strlen($path_old) + 1)]);
 
 			// Replace keyword with new parents
-			$keyword = implode('/', [
-				$seo_urls[$result['store_id']][$result['language_id']][$path_new], oc_substr(
-					$result['keyword'],
-					oc_strlen($keywords_old[$result['store_id']][$result['language_id']]) + 1
-				)
-			]);
+			$keyword = implode('/', [$seo_urls[$result['store_id']][$result['language_id']][$path_new], oc_substr($result['keyword'], oc_strlen($keywords_old[$result['store_id']][$result['language_id']]) + 1)]);
 
 			$seo_urls[$result['store_id']][$result['language_id']][$path] = $keyword;
 
@@ -431,11 +426,13 @@ class Category extends \Opencart\System\Engine\Model {
 			$language_id = $this->config->get('config_language_id');
 		}
 
-		$sql = "SELECT `cp`.`category_id` AS `category_id`, `c1`.`image`, GROUP_CONCAT(`cd1`.`name` ORDER BY `cp`.`level` SEPARATOR ' &gt ') AS `name`, `c1`.`parent_id`, `c1`.`sort_order`, `c1`.`status` FROM `" . DB_PREFIX . "category_path` `cp` LEFT JOIN `" . DB_PREFIX . "category` `c1` ON (`cp`.`category_id` = `c1`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category` `c2` ON (`cp`.`path_id` = `c2`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd1` ON (`cp`.`path_id` = `cd1`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cp`.`category_id` = `cd2`.`category_id`) WHERE `cd1`.`language_id` = '" . (int)$language_id . "' AND `cd2`.`language_id` = '" . (int)$language_id . "'";
+		$sql = "SELECT `cp`.`category_id` AS `category_id`, `c1`.`image`, GROUP_CONCAT(`cd1`.`name` ORDER BY `cp`.`level` SEPARATOR ' &gt ') AS `name`, `c1`.`parent_id`, `c1`.`sort_order`, `c1`.`status` FROM `" . DB_PREFIX . "category_path` `cp` LEFT JOIN `" . DB_PREFIX . "category` `c1` ON (`cp`.`category_id` = `c1`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category` `c2` ON (`cp`.`path_id` = `c2`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd1` ON (`cp`.`path_id` = `cd1`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cp`.`category_id` = `cd2`.`category_id`)";
 
 		if (isset($data['filter_store_id']) && $data['filter_store_id'] !== '') {
 			$sql .= " LEFT JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c1`.`category_id` = `c2s`.`category_id`)";
 		}
+
+		$sql .= " WHERE `cd1`.`language_id` = '" . (int)$language_id . "' AND `cd2`.`language_id` = '" . (int)$language_id . "'";
 
 		if (!empty($data['filter_name'])) {
 			$sql .= " AND LCASE(`cd2`.`name`) LIKE '" . $this->db->escape(oc_strtolower((string)$data['filter_name'])) . "'";
@@ -505,6 +502,18 @@ class Category extends \Opencart\System\Engine\Model {
 		$query = $this->db->query($sql);
 
 		return $query->rows;
+	}
+
+	public function getCategoriesByFilterId(int $filter_id): array {
+		$category_filter_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_filter` WHERE `filter_id` = '" . (int)$filter_id . "'");
+
+		foreach ($query->rows as $result) {
+			$category_filter_data[] = $result['category_id'];
+		}
+
+		return $category_filter_data;
 	}
 
 	/**
@@ -652,10 +661,10 @@ class Category extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $category_id): array {
 		$category_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_description` WHERE `category_id` = '" . (int)$category_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `cd`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "category_description` `cd` WHERE `cd`.`category_id` = '" . (int)$category_id . "'");
 
 		foreach ($query->rows as $result) {
-			$category_description_data[$result['language_id']] = $result;
+			$category_description_data[$result['code']] = $result;
 		}
 
 		return $category_description_data;
@@ -969,6 +978,21 @@ class Category extends \Opencart\System\Engine\Model {
 		}
 
 		return $category_store_data;
+	}
+
+	/*
+	 * Get information data based on stores
+	 */
+	public function getStoresByStoreId(int $store_id): array {
+		$category_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_to_store` WHERE `store_id` = '" . (int)$store_id . "'");
+
+		foreach ($query->rows as $result) {
+			$category_data[] = $result['category_id'];
+		}
+
+		return $category_data;
 	}
 
 	/**

@@ -11,22 +11,20 @@ class Currency extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new currency data.
 	 *
-	 * Called using
+	 * Triggered using admin/model/localisation/currency/addCategory/after
+	 * Triggered using admin/model/localisation/currency/editCategory/after
+	 * Triggered using admin/model/localisation/currency/deleteCategory/after
 	 *
-	 * admin/model/localisation/currency/addCategory/after
-	 * admin/model/localisation/currency/editCategory/after
-	 * admin/model/localisation/currency/deleteCategory/after
-	 *
-	 * @param string                $route
-	 * @param array<string, string> $args
-	 * @param array<string, string> $output
+	 * @param string            $route
+	 * @param array<int, mixed> $args
+	 * @param mixed             $output
 	 *
 	 * @return void
 	 */
 	public function index(string &$route, array &$args, &$output): void {
 		$task_data = [
-			'code'   => 'currency.list',
-			'action' => 'task/catalog/currency',
+			'code'   => 'admin.currency',
+			'action' => 'task/admin/currency',
 			'args'   => []
 		];
 
@@ -34,15 +32,18 @@ class Currency extends \Opencart\System\Engine\Controller {
 
 		$this->model_setting_task->addTask($task_data);
 
-		/*
-		// Admin
-		$task_data = [
-			'code'   => 'admin.currency',
-			'action' => 'task/admin/currency',
-			'args'   => []
-		];
+		$this->load->model('setting/store');
 
-		$this->model_setting_task->addTask($task_data);
-		*/
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'currency.' . $store_id,
+				'action' => 'task/catalog/currency',
+				'args'   => ['store_id' => $store_id]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 }

@@ -306,8 +306,7 @@ function oc_db_schema() {
 			],
 			[
 				'name'    => 'attribute_group_id',
-				'type'    => 'int(11)',
-				'default' => '0'
+				'type'    => 'int(11)'
 			],
 			[
 				'name'    => 'sort_order',
@@ -685,7 +684,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'description',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'image',
@@ -950,7 +949,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'description',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'image',
@@ -1230,7 +1229,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'description',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'meta_title',
@@ -3889,7 +3888,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'description',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'meta_title',
@@ -4240,7 +4239,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'setting',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			]
 		],
 		'primary' => [
@@ -5479,7 +5478,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'description',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'tag',
@@ -5769,25 +5768,13 @@ function oc_db_schema() {
 				'type' => 'decimal(15,4)'
 			],
 			[
-				'name' => 'price_prefix',
-				'type' => 'varchar(1)'
-			],
-			[
 				'name'    => 'points',
 				'type'    => 'int(8)',
 				'default' => '0'
 			],
 			[
-				'name' => 'points_prefix',
-				'type' => 'varchar(1)'
-			],
-			[
 				'name' => 'weight',
 				'type' => 'decimal(15,8)'
-			],
-			[
-				'name' => 'weight_prefix',
-				'type' => 'varchar(1)'
 			]
 		],
 		'primary' => [
@@ -6606,7 +6593,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'data',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name' => 'expire',
@@ -6652,7 +6639,7 @@ function oc_db_schema() {
 			],
 			[
 				'name' => 'value',
-				'type' => 'text'
+				'type' => 'mediumtext'
 			],
 			[
 				'name'    => 'serialized',
@@ -7516,6 +7503,52 @@ function oc_db_schema() {
 	];
 
 	$tables[] = [
+		'name'  => 'template',
+		'field' => [
+			[
+				'name'           => 'template_id',
+				'type'           => 'int(11)',
+				'auto_increment' => true
+			],
+			[
+				'name'    => 'store_id',
+				'type'    => 'int(11)',
+				'default' => '0'
+			],
+			[
+				'name' => 'route',
+				'type' => 'varchar(64)'
+			],
+			[
+				'name' => 'code',
+				'type' => 'mediumtext'
+			],
+			[
+				'name'    => 'status',
+				'type'    => 'tinyint(1)',
+				'default' => '0'
+			],
+			[
+				'name' => 'date_added',
+				'type' => 'datetime'
+			]
+		],
+		'primary' => [
+			'template_id'
+		],
+		'foreign' => [
+			[
+				'key'   => 'store_id',
+				'table' => 'store',
+				'field' => 'store_id'
+			]
+		],
+		'engine'  => 'InnoDB',
+		'charset' => 'utf8mb4',
+		'collate' => 'utf8mb4_unicode_ci'
+	];
+
+	$tables[] = [
 		'name'  => 'theme',
 		'field' => [
 			[
@@ -7529,8 +7562,9 @@ function oc_db_schema() {
 				'default' => '0'
 			],
 			[
-				'name' => 'route',
-				'type' => 'varchar(64)'
+				'name'    => 'route',
+				'type'    => 'varchar(64)',
+				'default' => '0'
 			],
 			[
 				'name' => 'code',
@@ -7575,6 +7609,10 @@ function oc_db_schema() {
 				'default' => '0'
 			],
 			[
+				'name' => 'value',
+				'type' => 'text'
+			],
+			[
 				'name' => 'language_id',
 				'type' => 'int(11)'
 			],
@@ -7587,10 +7625,6 @@ function oc_db_schema() {
 				'type' => 'varchar(64)'
 			],
 			[
-				'name' => 'value',
-				'type' => 'text'
-			],
-			[
 				'name'    => 'status',
 				'type'    => 'tinyint(1)',
 				'default' => '0'
@@ -7601,7 +7635,9 @@ function oc_db_schema() {
 			]
 		],
 		'primary' => [
-			'translation_id'
+			'translation_id',
+			'store_id',
+			'language_id'
 		],
 		'foreign' => [
 			[
@@ -7613,6 +7649,96 @@ function oc_db_schema() {
 				'key'   => 'language_id',
 				'table' => 'language',
 				'field' => 'language_id'
+			]
+		],
+		'index' => [
+			[
+				'name' => 'store',
+				'key'  => [
+					'store_id'
+				]
+			],
+			[
+				'name' => 'language',
+				'key'  => [
+					'language_id'
+				]
+			],
+			[
+				'name' => 'route',
+				'key'  => [
+					'route'
+				]
+			],
+			[
+				'name' => 'key',
+				'key'  => [
+					'key'
+				]
+			]
+		],
+		'engine'  => 'InnoDB',
+		'charset' => 'utf8mb4',
+		'collate' => 'utf8mb4_unicode_ci'
+	];
+
+	$tables[] = [
+		'name'  => 'translation_description',
+		'field' => [
+			[
+				'name'           => 'translation_id',
+				'type'           => 'int(11)',
+				'auto_increment' => true
+			],
+			[
+				'name'    => 'store_id',
+				'type'    => 'int(11)',
+				'default' => '0'
+			],
+			[
+				'name' => 'language_id',
+				'type' => 'int(11)'
+			],
+			[
+				'name' => 'value',
+				'type' => 'text'
+			]
+		],
+		'primary' => [
+			'translation_id',
+			'store_id',
+			'language_id'
+		],
+		'foreign' => [
+			[
+				'key'   => 'store_id',
+				'table' => 'store',
+				'field' => 'store_id'
+			],
+			[
+				'key'   => 'language_id',
+				'table' => 'language',
+				'field' => 'language_id'
+			]
+		],
+		'index' => [
+			[
+				'name' => 'translation',
+				'key'  => [
+					'translation_id'
+				]
+			],
+			[
+				'name' => 'store',
+				'key'  => [
+					'store_id'
+				]
+			],
+			[
+				'name' => 'language',
+				'key'  => [
+					'language_id'
+				]
 			]
 		],
 		'engine'  => 'InnoDB',

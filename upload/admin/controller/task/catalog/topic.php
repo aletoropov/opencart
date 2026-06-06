@@ -3,58 +3,261 @@ namespace Opencart\Admin\Controller\Task\Catalog;
 /**
  * Class Topic
  *
+ *  Generates topic data for all stores.
+ *
  * @package Opencart\Admin\Controller\Task\Catalog
  */
 class Topic extends \Opencart\System\Engine\Controller {
 	/**
-	 * Index
+	 * List
 	 *
-	 * Generate all country data.
+	 * Generate information task list.
 	 *
 	 * @param array<string, string> $args
 	 *
 	 * @return array
 	 */
-	public function add(array $args = []): array {
+	public function index(array $args = []): array {
 		$this->load->language('task/catalog/topic');
 
-		// Clear old data
-		$task_data = [
-			'code'   => 'topic',
-			'action' => 'task/catalog/topic.clear',
-			'args'   => []
+		$store_info = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name'),
+			'url'      => HTTP_CATALOG
 		];
 
-		$this->load->model('setting/task');
+		if ($args['store_id']) {
+			$this->load->model('setting/store');
 
-		$this->model_setting_task->addTask($task_data);
+			$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
 
-		// List
-		$task_data = [
-			'code'   => 'topic',
-			'action' => 'task/catalog/topic.list',
-			'args'   => []
+			if (!$store_info) {
+				return ['error' => $this->language->get('error_store')];
+			}
+		}
+
+		$topic_data = [];
+
+		$filter_data = [
+			'filter_store_id' => $store_info['store_id'],
+			'filter_status'   => true,
+			'sort'            => 'sort_order',
+			'order'           => 'ASC',
 		];
 
-		$this->model_setting_task->addTask($task_data);
-
-		// Info
 		$this->load->model('cms/topic');
 
-		$topics = $this->model_cms_topic->getCountries();
+		$results = $this->model_cms_topic->getTopics($filter_data);
 
-		foreach ($topics as $topic) {
-			$task_data = [
-				'code'   => 'topic',
-				'action' => 'task/catalog/topic.info',
-				'args'   => ['topic_id' => $topic['topic_id']]
+		foreach ($results as $result) {
+			$description_data = [];
+
+			$descriptions = $this->model_cms_topic->getDescriptions($result['topic_id']);
+
+			foreach ($descriptions as $code => $description) {
+				$description_data[$code] = [
+					'name'        => $description['name'],
+					'description' => $description['description'],
+					'image'       => $description['image']
+				];
+			}
+
+			$topic_data[] = [
+				'topic_id'    => $result['topic_id'],
+				'description' => $description_data,
+				'stores'      => $this->model_cms_topic->getStores($result['topic_id'])
 			];
+		}
 
-			$this->model_setting_task->addTask($task_data);
+		$directory = DIR_CATALOG . 'view/data/cms/';
+		$filename = 'topic.yaml';
+
+		if (!oc_directory_create($directory, 0777)) {
+			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
+		}
+
+		if (!file_put_contents($directory . $filename, oc_yaml_encode($topic_data))) {
+			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
+		}
+
+		return ['success' => sprintf($this->language->get('text_list'), $store_info['name'])];
+	}
+
+	/**
+	 * Info
+	 *
+	 * Generate all topic data.
+	 *
+	 * @param array<string, string> $args
+	 *
+	 * @return array
+	 */
+	public function info(array $args = []): array {
+		$this->load->language('task/catalog/topic');
+
+		if (!array_key_exists('topic_id', $args)) {
+			return ['error' => $this->language->get('error_required')];
+		}
+
+		// Store
+		$store_info = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name'),
+			'url'      => HTTP_CATALOG
+		];
+
+		if ($args['store_id']) {
+			$this->load->model('setting/store');
+
+			$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
+
+			if (!$store_info) {
+				return ['error' => $this->language->get('error_store')];
+			}
+		}
+
+		// Topic
+		$this->load->model('cms/topic');
+
+		$topic_info = $this->model_cms_topic->getTopic((int)$args['topic_id']);
+
+		if (!$topic_info || !$topic_info['status'] || !in_array($store_info['store_id'], $this->model_cms_topic->getStores($topic_info['topic_id']))) {
+			return ['error' => $this->language->get('error_topic')];
+		}
+
+		// Description
+		$description_data = [];
+
+		$descriptions = $this->model_cms_topic->getDescriptions($topic_info['topic_id']);
+
+		foreach ($descriptions as $code => $description) {
+			$description_data[$code] = [
+				'name'             => $description['name'],
+				'description'      => $description['description'],
+				'image'            => $description['image'],
+				'meta_title'       => $description['meta_title'],
+				'meta_description' => $description['meta_description'],
+				'meta_keyword'     => $description['meta_keyword']
+			];
+		}
+
+		$topic_data = [
+			'topic_id'    => $topic_info['topic_id'],
+			'description' => $description_data
+		];
+
+		$directory = DIR_CATALOG . 'view/data/' . parse_url($store_info['url'], PHP_URL_HOST) . '/cms/';
+		$filename = 'topic-' . $topic_info['topic_id'] . '.yaml';
+
+		if (!oc_directory_create($directory, 0777)) {
+			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
+		}
+
+		if (!file_put_contents($directory . $filename, oc_yaml_encode($topic_data))) {
+			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
+		}
+
+		return ['success' => sprintf($this->language->get('text_info'), $store_info['name'], $topic_info['title'])];
+	}
+
+	/**
+	 * Article
+	 *
+	 * Generate article list.
+	 *
+	 * @param array<string, string> $args
+	 *
+	 * @return array
+	 */
+	public function article(array $args = []): array {
+		$this->load->language('task/catalog/topic');
+
+		if (!array_key_exists('topic_id', $args)) {
+			return ['error' => $this->language->get('error_required')];
+		}
+
+		$store_info = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name'),
+			'url'      => HTTP_CATALOG
+		];
+
+		if ($args['store_id']) {
+			$this->load->model('setting/store');
+
+			$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
+
+			if (!$store_info) {
+				return ['error' => $this->language->get('error_store')];
+			}
+		}
+
+		$this->load->model('cms/topic');
+
+		$topic_info = $this->model_cms_topic->getTopic((int)$args['topic_id']);
+
+		if (!$topic_info || !$topic_info['status'] || !in_array($store_info['store_id'], $this->model_cms_topic->getStores($topic_info['topic_id']))) {
+			return ['success' => $this->language->get('error_topic')];
+		}
+
+		$directory = DIR_CATALOG . 'view/data/' . parse_url($store_info['url'], PHP_URL_HOST) . '/catalog/';
+		$filename = 'article_topic-' . $topic_info['topic_id'] . '.csv';
+
+		if (!oc_directory_create($directory, 0777)) {
+			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
+		}
+
+		$filter_data = [
+			'filter_store_id'  => $store_info['store_id'],
+			'filter_topic_id'  => $topic_info['topic_id'],
+			'filter_status'    => true,
+			'sort'             => 'sort_order',
+			'order'            => 'ASC',
+		];
+
+		$this->load->model('cms/article');
+
+		if (!file_put_contents($directory . $filename, implode(',', array_column($this->model_cms_article->getArticles($filter_data), 'article_id')))) {
+			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
 		}
 
 		return ['success' => $this->language->get('text_task')];
 	}
 
+	/**
+	 * Delete
+	 *
+	 * Delete generated JSON information files.
+	 *
+	 * @param array<string, string> $args
+	 *
+	 * @return array
+	 */
+	public function delete(array $args = []): array {
+		$this->load->language('task/catalog/topic');
 
+		if (!array_key_exists('topic_id', $args)) {
+			return ['error' => $this->language->get('error_required')];
+		}
+
+		$this->load->model('setting/store');
+
+		$store_urls = [HTTP_CATALOG, ...array_column($this->model_setting_store->getStores(), 'url')];
+
+		foreach ($store_urls as $store_url) {
+			$file = DIR_CATALOG . 'view/data/' . parse_url($store_url, PHP_URL_HOST) . '/cms/topic-' . (int)$args['topic_id'] . '.yaml';
+
+			if (is_file($file)) {
+				unlink($file);
+			}
+
+			$file = DIR_CATALOG . 'view/data/' . parse_url($store_url, PHP_URL_HOST) . '/cms/topic-article-' . (int)$args['topic_id'] . '.csv';
+
+			if (is_file($file)) {
+				unlink($file);
+			}
+		}
+
+		return ['success' => $this->language->get('text_delete')];
+	}
 }

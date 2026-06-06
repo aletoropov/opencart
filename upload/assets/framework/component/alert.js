@@ -1,7 +1,7 @@
 import { WebComponent } from '../component.js';
 
-class XAlert extends WebComponent {
-    async connected() {
+customElements.define('x-alert', class extends WebComponent {
+    render() {
         let icon = '';
         let type = this.getAttribute('type');
 
@@ -20,8 +20,10 @@ class XAlert extends WebComponent {
                 break;
         }
 
-        this.innerHTML = '<div class="alert ' + type + '"><i class="fa ' + icon + '"></i> ' + this.innerHTML + '</div>';
+        return '<div class="alert ' + type + '" data-on="load:timeout"><i class="fa ' + icon + '"></i> ' + this.innerHTML + '</div>';
+    }
 
+    timeout(e) {
         // Get the alert element
         let alert = this.querySelector('.alert');
 
@@ -30,7 +32,7 @@ class XAlert extends WebComponent {
         }
     }
 
-    timeout(e) {
+    _timeout(e) {
         this.style.opacity = 1;
 
         const fade = () => {
@@ -45,6 +47,4 @@ class XAlert extends WebComponent {
 
         this._timer = window.setInterval(fade.bind(this), 60);
     }
-}
-
-customElements.define('x-alert', XAlert);
+});

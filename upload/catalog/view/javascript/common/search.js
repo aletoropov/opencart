@@ -1,4 +1,4 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
 // Language
@@ -7,8 +7,8 @@ const language = await loader.language('common/search');
 // URL
 const url = new URLSearchParams(document.location.search);
 
-class CommonSearch extends WebComponent {
-    connected() {
+export default class extends Controller {
+    render() {
         let data = {};
 
         if (url.has('search')) {
@@ -17,21 +17,11 @@ class CommonSearch extends WebComponent {
             data.search = '';
         }
 
-        let response = loader.template('common/search', { ...data, ...language });
-
-        response.then(this.render.bind(this));
-        response.then(this.onSubmit.bind(this));
-    }
-
-    render(html) {
-        this.innerHTML = html;
+        return loader.template('common/search', { ...data, ...language });
     }
 
     onSubmit(e) {
+        e.preventDefault();
 
-
-        //location = '';
     }
 }
-
-customElements.define('common-search', CommonSearch);

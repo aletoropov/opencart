@@ -1,20 +1,18 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
-// Config
-const config = await loader.config('catalog');
+// Language
+const language = await loader.language('account/edit');
 
 // Library
-const session = loader.library('session');
+const session = await loader.library('session');
 
-// Language
-const language = loader.language('account/edit');
-
-class AccountEdit extends WebComponent {
-    async connected() {
+export default class extends Controller {
+    async render() {
         let data = {};
 
-        let customer = session.get('customer');
+        //let customer = session.get('customer');
+        let customer = new Map();
 
         data.firstname = customer.get('firstname');
         data.lastname = customer.get('lastname');
@@ -30,26 +28,12 @@ class AccountEdit extends WebComponent {
             data.custom_fields = customer_group.custom_fields;
         }
 
-        let response = loader.template('account/register', { ...data, ...language, ...config });
-
-        response.then(this.render.bind(this));
-        response.then(this.addEvent.bind(this));
-    }
-
-    render(html) {
-        this.innerHTML = html;
-    }
-
-    addEvent() {
-        let form = this.querySelector('#form-customer');
-
-        form.addEventListener('submit', this.onSubmit.bind(this));
+        return loader.template('account/edit', { ...data, ...language });
     }
 
     onSubmit(e) {
         e.preventDefault();
 
+        this.$button.state = 'loading';
     }
 }
-
-customElements.define('account-edit', AccountEdit);

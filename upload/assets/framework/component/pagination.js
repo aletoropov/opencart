@@ -1,17 +1,47 @@
 import { WebComponent } from '../component.js';
 
-class XPagination extends WebComponent {
-    href = '';
-    target = '';
-    limit = 10;
-    total = 0;
+customElements.define('x-pagination', class extends WebComponent {
+    static observed = [
+        'href',
+        'target',
+        'limit',
+        'total',
+        'page'
+    ];
+
     num_links = 8;
-    num_pages = 0;
-    first = '';
-    last = '';
-    next = '';
-    prev = '';
-    links = [];
+
+    get href() {
+        return this.getAttribute('href');
+    }
+
+    set href(value) {
+        this.setAttribute('href', value);
+    }
+
+    get target() {
+        return this.getAttribute('target');
+    }
+
+    set target(value) {
+        this.setAttribute('target', value);
+    }
+
+    get limit() {
+        return parseInt(this.getAttribute('limit'));
+    }
+
+    set limit(value) {
+        this.setAttribute('limit', value);
+    }
+
+    get total() {
+        return parseInt(this.getAttribute('total'));
+    }
+
+    set total(value) {
+        this.setAttribute('total', value);
+    }
 
     get page() {
         return parseInt(this.getAttribute('page'));
@@ -21,29 +51,28 @@ class XPagination extends WebComponent {
         this.setAttribute('page', value);
     }
 
-    async connected() {
-        this.href = this.getAttribute('href');
-        this.target = this.getAttribute('target');
-        this.limit = this.getAttribute('limit');
-        this.total = this.getAttribute('total');
-        this.num_pages = Math.ceil(this.total / this.limit);
+    render() {
+        let num_pages = Math.ceil(this.total / this.limit);
+
+        let first = '';
+        let prev = '';
 
         if (this.page > 1) {
-            this.first = this.href.replace('{page}', 1);
+            first = this.href.replace('{page}', 1);
 
             if ((this.page - 1) === 1) {
-                this.prev = this.href.replace('{page}', 1);
+                prev = this.href.replace('{page}', 1);
             } else {
-                this.prev = this.href.replace('{page}', (this.page - 1));
+                prev = this.href.replace('{page}', (this.page - 1));
             }
         }
 
         let start = 0;
         let end = 0;
 
-        if (this.num_pages <= this.num_links) {
+        if (num_pages <= this.num_links) {
             start = 1;
-            end = this.num_pages;
+            end = num_pages;
         } else {
             start = this.page - Math.floor(this.num_links / 2);
             end = this.page + Math.floor(this.num_links / 2);
@@ -54,81 +83,59 @@ class XPagination extends WebComponent {
             end += Math.abs(start) + 1;
         }
 
-        if (end > this.num_pages) {
-            start -= (end - this.num_pages);
-            end = this.num_pages;
+        if (end > num_pages) {
+            start -= (end - num_pages);
+            end = num_pages;
         }
 
-        for (let i = start; i <= end; i++) {
-            this.links[i] = {
-                page: i,
-                href: this.href.replace('{page}', i)
-            };
+        let next = '';
+        let last = '';
+
+        if (num_pages > this.page) {
+            next = this.href.replace('{page}', this.page + 1);
+            last = this.href.replace('{page}', num_pages);
         }
 
-        if (this.num_pages > this.page) {
-            this.next = this.href.replace('{page}', this.page + 1);
-            this.last = this.href.replace('{page}', this.num_pages);
-        }
+        let html = '';
 
-        this.render();
-    }
+        if (num_pages > 1) {
+            html += '<ul class="pagination">';
 
-    render() {
-        if (this.num_pages > 1) {
-            let html = '<ul class="pagination">';
-
-            if (this.first) {
-                html += '<li class="page-item"><a href="' + this.first +'" class="page-link">|&lt;</a></li>';
+            if (first) {
+                html += '<li class="page-item"><a href="' + first +'" data-on="click:onClick" class="page-link">|&lt;</a></li>';
             }
 
-            if (this.prev) {
-                html += '<li class="page-item"><a href="' + this.prev + '" class="page-link">&lt;</a></li>';
+            if (prev) {
+                html += '<li class="page-item"><a href="' + prev + '" data-on="click:onClick" class="page-link">&lt;</a></li>';
             }
 
-            for (let i in this.links) {
-                if (this.links[i].page == this.page) {
-                    html += '<li class="page-item active"><span class="page-link">' + this.links[i].page + '</span></li>';
+            for (let i = start; i <= end; i++) {
+                if (i == this.page) {
+                    html += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
                 } else {
-                    html += '<li class="page-item"><a href="' + this.links[i].href + '" class="page-link">' + this.links[i].page + '</a></li>';
+                    html += '<li class="page-item"><a href="' + this.href.replace('{page}', i) + '" data-on="click:onClick" class="page-link">' + i + '</a></li>';
                 }
             }
 
-            if (this.next) {
-                html += '<li class="page-item"><a href="' + this.next + '" class="page-link">&gt;</a></li>';
+            if (next) {
+                html += '<li class="page-item"><a href="' + next + '" data-on="click:onClick" class="page-link">&gt;</a></li>';
             }
 
-            if (this.last) {
-                html += '<li class="page-item"><a href="' + this.last + '" class="page-link">&gt;|</a></li>';
+            if (last) {
+                html += '<li class="page-item"><a href="' + last + '" data-on="click:onClick" class="page-link">&gt;|</a></li>';
             }
 
             html += '</ul>';
-
-            this.innerHTML = html;
-
-            this.querySelectorAll('a').forEach((link) => link.addEventListener('click', this.onclick));
         }
+
+        return html;
     }
 
-    async onclick(e) {
+    async onClick(e) {
         e.preventDefault();
 
-        this.fetch(e.target.getAttribute('href')).then(this.onload);
+        let target = document.getElementById(this.target);
+
+        target.src = this.href;
     }
-
-    async fetch(url) {
-        let response = await fetch(url);
-
-        if (response.status == 200) {
-            return response.text();
-        }
-    }
-
-    onload(html) {
-        let element = document.querySelector(this.target);
-
-        element.innerHTML = html;
-    }
-}
-
-customElements.define('x-pagination', XPagination);
+});

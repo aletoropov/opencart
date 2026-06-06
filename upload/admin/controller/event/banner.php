@@ -11,7 +11,7 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new banner data.
 	 *
-	 * Called using admin/model/deign/banner/addBanner/after
+	 * Trigger admin/model/deign/banner/addBanner/after
 	 *
 	 * @param string                $route
 	 * @param array<string, string> $args
@@ -20,15 +20,23 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addBanner(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'banner.info.' . $output,
-			'action' => 'task/catalog/banner',
-			'args'   => ['banner_id' => $output]
-		];
-
 		$this->load->model('setting/task');
+		$this->load->model('setting/store');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'banner.' . $store_id . '.' . $output,
+				'action' => 'task/catalog/banner',
+				'args'   => [
+					'banner_id' => $output,
+					'store_id'  => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 
 	/*
@@ -36,7 +44,7 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new banner data.
 	 *
-	 * Called using admin/model/deign/banner/addBanner/after
+	 * Trigger admin/model/deign/banner/editBanner/before
 	 *
 	 * @param string                $route
 	 * @param array<string, string> $args
@@ -45,15 +53,23 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function editBanner(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'banner.info.' . $args[0],
-			'action' => 'task/catalog/banner.info',
-			'args'   => ['banner_id' => $args[0]]
-		];
-
 		$this->load->model('setting/task');
+		$this->load->model('setting/store');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'banner.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/banner',
+				'args'   => [
+					'banner_id' => $args[0],
+					'store_id'  => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 
 	/*
@@ -61,7 +77,7 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new banner data.
 	 *
-	 * Called using admin/model/deign/banner/addBanner/after
+	 * Trigger admin/model/deign/banner/deleteBanner/before
 	 *
 	 * @param string                $route
 	 * @param array<string, string> $args
@@ -70,14 +86,22 @@ class Banner extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function deleteBanner(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'banner.delete.' . $args[0],
-			'action' => 'task/catalog/banner.delete',
-			'args'   => ['banner_id' => $args[0]]
-		];
-
 		$this->load->model('setting/task');
+		$this->load->model('setting/store');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'banner.delete.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/banner.delete',
+				'args'   => [
+					'banner_id' => $args[0],
+					'store_id'  => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 }

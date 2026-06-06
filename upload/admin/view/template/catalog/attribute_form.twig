@@ -26,7 +26,7 @@
                 {% for language in languages %}
                   <div class="input-group">
                     <div class="input-group-text"><img src="{{ language.image }}" title="{{ language.name }}"/></div>
-                    <input type="text" name="attribute_group_description[{{ language.language_id }}][name]" value="{{ attribute_group_description[language.language_id] ? attribute_group_description[language.language_id].name }}" id="input-name-{{ language.language_id }}" placeholder="{{ entry_attribute_group }}" class="form-control" required/>
+                    <input type="text" name="attribute_group_description[{{ language.language_id }}][name]" value="{{ attribute_group_description[language.code] ? attribute_group_description[language.code].name }}" id="input-name-{{ language.language_id }}" placeholder="{{ entry_attribute_group }}" class="form-control" required/>
                   </div>
                   <div id="error-name-{{ language.language_id }}" class="invalid-feedback"></div>
                 {% endfor %}
@@ -57,7 +57,7 @@
                       {% for language in languages %}
                         <div class="input-group">
                           <div class="input-group-text"><img src="{{ language.image }}" title="{{ language.name }}"/></div>
-                          <input type="text" name="attribute[{{ attribute_row }}][attribute_description][{{ language.language_id }}][name]" value="{{ attribute.attribute_description[language.language_id] ? attribute.attribute_description[language.language_id].name }}" placeholder="{{ entry_name }}" id="input-attribute-{{ attribute_row }}-{{ language.language_id }}" class="form-control"/>
+                          <input type="text" name="attribute[{{ attribute_row }}][attribute_description][{{ language.language_id }}][name]" value="{{ attribute.description[language.code] ? attribute.description[language.code].name }}" placeholder="{{ entry_name }}" id="input-attribute-{{ attribute_row }}-{{ language.language_id }}" class="form-control"/>
                         </div>
                         <div id="error-attribute-{{ attribute_row }}-{{ language.language_id }}" class="invalid-feedback"></div>
                       {% endfor %}</td>
@@ -75,7 +75,8 @@
               </tfoot>
             </table>
           </fieldset>
-          <input type="hidden" name="attribute_id" value="{{ attribute_id }}" id="input-attribute-id"/> <input type="hidden" name="user_token" value="{{ user_token }}" id="input-user-token"/>
+          <input type="hidden" name="attribute_group_id" value="{{ attribute_group_id }}" id="input-attribute-id"/>
+          <input type="hidden" name="user_token" value="{{ user_token }}" id="input-user-token"/>
         </form>
       </div>
     </div>

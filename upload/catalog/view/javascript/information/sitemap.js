@@ -1,12 +1,15 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class InformationSitemap extends WebComponent {
-    async connected() {
+// Language
+const language = await loader.language('information/sitemap');
 
+export default class extends Controller {
+    render() {
+        let data = {};
 
+        data.categories = {};
 
-        let response = this.load.template.render('common/header', this.data);
+        return loader.template('information/sitemap', { ...data, ...language });
     }
 }
-
-customElements.define('information-sitemap', InformationSitemap);

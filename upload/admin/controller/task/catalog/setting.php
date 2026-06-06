@@ -3,6 +3,8 @@ namespace Opencart\Admin\Controller\Task\Catalog;
 /**
  * Class Setting
  *
+ * Generates setting data for all stores.
+ *
  * @package Opencart\Admin\Controller\Task\Catalog
  */
 class Setting extends \Opencart\System\Engine\Controller {
@@ -18,45 +20,19 @@ class Setting extends \Opencart\System\Engine\Controller {
 	public function index(array $args = []): array {
 		$this->load->language('task/catalog/setting');
 
-		// Clear old data
-		$task_data = [
-			'code'   => 'setting',
-			'action' => 'task/catalog/setting.clear',
-			'args'   => []
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-		$stores = [];
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'setting',
+				'action' => 'task/catalog/setting.store',
+				'args'   => ['store_id' => $store_id]
+			];
 
-		$stores[] = [
-			'store_id' => 0,
-			'name'     => $this->config->get('config_name')
-		];
-
-		$this->load->model('setting/store');
-
-		$stores = array_merge($stores, $this->model_setting_store->getStores());
-
-		$this->load->model('localisation/language');
-
-		$languages = $this->model_localisation_language->getLanguages();
-
-		foreach ($stores as $store) {
-			foreach ($languages as $language) {
-				$task_data = [
-					'code'   => 'setting',
-					'action' => 'task/catalog/setting.store',
-					'args'   => [
-						'store_id'    => $store['store_id'],
-						'language_id' => $language['language_id']
-					]
-				];
-
-				$this->model_setting_task->addTask($task_data);
-			}
+			$this->model_setting_task->addTask($task_data);
 		}
 
 		return ['success' => $this->language->get('text_task')];
@@ -226,9 +202,9 @@ class Setting extends \Opencart\System\Engine\Controller {
 
 		$base = DIR_CATALOG . 'view/data/';
 
-		$filename = parse_url($store_info['url'], PHP_URL_HOST) . '-' . $language_info['code'] . '.json';
+		$filename = parse_url($store_info['url'], PHP_URL_HOST) . '-' . $language_info['code'] . '.yaml';
 
-		if (!file_put_contents($base . $filename, json_encode($config))) {
+		if (!file_put_contents($base . $filename, oc_yaml_encode($config))) {
 			return ['error' => sprintf($this->language->get('error_file'), $filename)];
 		}
 
@@ -247,7 +223,7 @@ class Setting extends \Opencart\System\Engine\Controller {
 	public function clear(array $args = []): array {
 		$this->load->language('task/catalog/setting');
 
-		$file = DIR_CATALOG . 'view/data/' . parse_url($store['url'], PHP_URL_HOST) . '-' . $language['code'] . '.json';
+		$file = DIR_CATALOG . 'view/data/' . parse_url($store['url'], PHP_URL_HOST) . '-' . $language['code'] . '.yaml';
 
 		if (is_file($file)) {
 			unlink($file);

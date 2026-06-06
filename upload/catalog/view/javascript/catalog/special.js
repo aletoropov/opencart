@@ -1,9 +1,15 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
+// Language
+const language = await loader.language('catalog/special');
+
+export default class extends Controller {
     async connected() {
 
     }
-}
 
-customElements.define('x-account', XAccount);
+    render() {
+        return loader.template('catalog/special', { ...language });
+    }
+}

@@ -416,10 +416,10 @@ class Information extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $information_id): array {
 		$information_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "information_description` WHERE `information_id` = '" . (int)$information_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `id`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "information_description` `id` WHERE `id`.`information_id` = '" . (int)$information_id . "'");
 
 		foreach ($query->rows as $result) {
-			$information_description_data[$result['language_id']] = $result;
+			$information_description_data[$result['code']] = $result;
 		}
 
 		return $information_description_data;
@@ -520,15 +520,30 @@ class Information extends \Opencart\System\Engine\Model {
 	 * $information_store = $this->model_catalog_information->getStores($information_id);
 	 */
 	public function getStores(int $information_id): array {
-		$information_store_data = [];
+		$store_data = [];
 
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "information_to_store` WHERE `information_id` = '" . (int)$information_id . "'");
 
 		foreach ($query->rows as $result) {
-			$information_store_data[] = $result['store_id'];
+			$store_data[] = $result['store_id'];
 		}
 
-		return $information_store_data;
+		return $store_data;
+	}
+
+	/*
+	 * Get information data based on stores
+	 */
+	public function getStoresByStoreId(int $store_id): array {
+		$information_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "information_to_store` WHERE `store_id` = '" . (int)$store_id . "'");
+
+		foreach ($query->rows as $result) {
+			$information_data[] = $result['information_id'];
+		}
+
+		return $information_data;
 	}
 
 	/**

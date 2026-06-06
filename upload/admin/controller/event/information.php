@@ -11,7 +11,7 @@ class Information extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new information data.
 	 *
-	 * Called using model/catalog/information/addInformation/after
+	 * Trigger model/catalog/information/addInformation/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -20,15 +20,31 @@ class Information extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addInformation(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'information.info.' . $output,
-			'action' => 'task/catalog/information.info',
-			'args'   => ['information_id' => $output]
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'information.' . $store_id,
+				'action' => 'task/catalog/information',
+				'args'   => ['store_id' => $store_id]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			$task_data = [
+				'code'   => 'information.info.' . $store_id . '.' . $output,
+				'action' => 'task/catalog/information.info',
+				'args'   => [
+					'information_id' => $output,
+					'store_id'       => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 
 	/**
@@ -36,7 +52,7 @@ class Information extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new information data.
 	 *
-	 * Called using model/catalog/information/addInformation/after
+	 * Trigger model/catalog/information/addInformation/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -45,15 +61,31 @@ class Information extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function editInformation(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'information.info.' . $args[0],
-			'action' => 'task/catalog/information.info',
-			'args'   => ['information_id' => $args[0]]
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'information.' . $store_id,
+				'action' => 'task/catalog/information',
+				'args'   => ['store_id' => $store_id]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			$task_data = [
+				'code'   => 'information.info.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/information.info',
+				'args'   => [
+					'information_id' => $args[0],
+					'store_id'       => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 
 	/**
@@ -61,7 +93,7 @@ class Information extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new information data.
 	 *
-	 * Called using model/catalog/information/deleteInformation/after
+	 * Trigger model/catalog/information/deleteInformation/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -70,14 +102,30 @@ class Information extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function deleteInformation(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'information.delete.' . $args[0],
-			'action' => 'task/catalog/information.delete',
-			'args'   => ['information_id' => $args[0]]
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'information.' . $store_id,
+				'action' => 'task/catalog/information',
+				'args'   => ['store_id' => $store_id]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			$task_data = [
+				'code'   => 'information.delete.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/information.delete',
+				'args'   => [
+					'information_id' => $args[0],
+					'store_id'       => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 }

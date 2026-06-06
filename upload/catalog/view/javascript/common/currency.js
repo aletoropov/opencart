@@ -1,20 +1,20 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
 // library
 const local = await loader.library('local');
 
 // Config
-const config = await loader.config('catalog');
+const config = await loader.config('default');
 
 // Language
 const language = await loader.language('common/currency');
 
 // Storage
-let currencies = await loader.storage('localisation/currency');
+const currencies = await loader.storage('localisation/currency');
 
-class CommonCurrency extends WebComponent {
-    connected() {
+export default class extends Controller {
+    async render() {
         let data = {};
 
         // Config stored currency code
@@ -35,29 +35,22 @@ class CommonCurrency extends WebComponent {
 
         data.currencies = Object.values(currencies);
 
-        let response = loader.template('common/currency', { ...data, ...language });
-
-        response.then(this.render.bind(this));
-        response.then(this.addEvent.bind(this));
-    }
-
-    render(html) {
-        this.innerHTML = html;
-    }
-
-    addEvent() {
-        let form = document.getElementById('form-currency');
-
-        let elements = form.querySelectorAll('a');
-
-        for (let element of elements) {
-            element.addEventListener('click', this.onClick);
-        }
+        return loader.template('common/currency', { ...data, ...language });
     }
 
     onClick(e) {
-        local.set('currency', e.target.getAttribute('href'));
+        e.preventDefault();
+
+        let code = e.target.getAttribute('href');
+
+        local.set('currency', code);
+
+        this.update();
+
+        let elements = document.querySelectorAll('x-currency');
+
+        for (let element of elements) {
+
+        }
     }
 }
-
-customElements.define('common-currency', CommonCurrency);

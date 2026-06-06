@@ -689,7 +689,9 @@ class Product extends \Opencart\System\Engine\Model {
 			// Description
 			$product_descriptions = $this->model_catalog_product->getDescriptions($master_id);
 
-			foreach ($product_descriptions as $language_id => $product_description) {
+			foreach ($product_descriptions as $product_description) {
+				$language_id = $product_description['language_id'];
+
 				foreach ($product_description as $key => $value) {
 					if (!isset($override['product_description'][$language_id][$key])) {
 						$product_data['product_description'][$language_id][$key] = $value;
@@ -831,7 +833,9 @@ class Product extends \Opencart\System\Engine\Model {
 			// Descriptions
 			$product_descriptions = $this->model_catalog_product->getDescriptions($product['product_id']);
 
-			foreach ($product_descriptions as $language_id => $product_description) {
+			foreach ($product_descriptions as $product_description) {
+				$language_id = $product_description['language_id'];
+
 				foreach ($product_description as $key => $value) {
 					// If override set use the POST data values
 					if (isset($override['product_description'][$language_id][$key])) {
@@ -1177,6 +1181,54 @@ class Product extends \Opencart\System\Engine\Model {
 		return $product_data;
 	}
 
+	public function getProductsByAttributeId(int $attribute_id): array {
+		$product_attribute_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_attribute` WHERE `attribute_id` = '" . (int)$attribute_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_attribute_data[] = $result['product_id'];
+		}
+
+		return $product_attribute_data;
+	}
+
+	public function getProductsByCategoryId(int $category_id): array {
+		$product_category_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_category` WHERE `category_id` = '" . (int)$category_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_category_data[] = $result['product_id'];
+		}
+
+		return $product_category_data;
+	}
+
+	public function getProductsByFilterId(int $filter_id): array {
+		$product_filter_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_filter` WHERE `filter_id` = '" . (int)$filter_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_filter_data[] = $result['product_id'];
+		}
+
+		return $product_filter_data;
+	}
+
+	public function getProductsByOptionId(int $option_id): array {
+		$product_option_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_option` WHERE `option_id` = '" . (int)$option_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_option_data[] = $result['product_id'];
+		}
+
+		return $product_option_data;
+	}
+
 	/**
 	 * Get Total Products
 	 *
@@ -1465,10 +1517,10 @@ class Product extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $product_id): array {
 		$product_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_description` WHERE `product_id` = '" . (int)$product_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `pd`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "product_description` `pd` WHERE `pd`.`product_id` = '" . (int)$product_id . "'");
 
 		foreach ($query->rows as $result) {
-			$product_description_data[$result['language_id']] = $result;
+			$product_description_data[$result['code']] = $result;
 		}
 
 		return $product_description_data;
@@ -1731,6 +1783,12 @@ class Product extends \Opencart\System\Engine\Model {
 		return $product_filter_data;
 	}
 
+	public function getTotalFiltersByFilterId(int $filter_id): int {
+		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product_filter` WHERE `filter_id` = '" . (int)$filter_id . "'");
+
+		return (int)$query->row['total'];
+	}
+
 	/**
 	 * Add Attribute
 	 *
@@ -1818,23 +1876,21 @@ class Product extends \Opencart\System\Engine\Model {
 	 * $product_attributes = $this->model_catalog_product->getAttributes($product_id);
 	 */
 	public function getAttributes(int $product_id): array {
-		$product_attribute_data = [];
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_attribute` `pa` WHERE `pa`.`product_id` = '" . (int)$product_id . "'");
 
-		$product_attribute_query = $this->db->query("SELECT `pa`.`attribute_id` FROM `" . DB_PREFIX . "product_attribute` `pa` LEFT JOIN `" . DB_PREFIX . "attribute` a ON (`a`.`attribute_id` = `pa`.`attribute_id`) LEFT JOIN `" . DB_PREFIX . "attribute_group` `ag` ON (`ag`.`attribute_group_id` = `a`.`attribute_group_id`) WHERE `pa`.`product_id` = '" . (int)$product_id . "' GROUP BY `pa`.`attribute_id` ORDER BY `ag`.`sort_order` ASC, `a`.`sort_order` ASC");
+		return $query->rows;
+	}
 
-		foreach ($product_attribute_query->rows as $product_attribute) {
-			$product_attribute_description_data = [];
+	public function getAttributeDescriptions(int $product_id, int $attribute_id): array {
+		$product_attribute_description_data = [];
 
-			$product_attribute_description_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_attribute` WHERE `product_id` = '" . (int)$product_id . "' AND `attribute_id` = '" . (int)$product_attribute['attribute_id'] . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `pa`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "product_attribute` `pa` WHERE `pa`.`product_id` = '" . (int)$product_id . "' AND `pa`.`attribute_id` = '" . (int)$attribute_id . "'");
 
-			foreach ($product_attribute_description_query->rows as $product_attribute_description) {
-				$product_attribute_description_data[$product_attribute_description['language_id']] = $product_attribute_description;
-			}
-
-			$product_attribute_data[] = ['product_attribute_description' => $product_attribute_description_data] + $product_attribute;
+		foreach ($query->rows as $result) {
+			$product_attribute_description_data[$result['code']] = $result;
 		}
 
-		return $product_attribute_data;
+		return $product_attribute_description_data;
 	}
 
 	/**
@@ -2064,11 +2120,8 @@ class Product extends \Opencart\System\Engine\Model {
 	 *     'quantity'                => 1,
 	 *     'subtract'                => 0,
 	 *     'price'                   => '0.0000',
-	 *     'price_prefix'            => '',
 	 *     'points'                  => '0',
-	 *     'points_prefix'           => '',
 	 *     'weight'                  => '0.0000',
-	 *     'weight_prefix'           => ''
 	 * ];
 	 *
 	 * $this->load->model('catalog/product');
@@ -2082,7 +2135,7 @@ class Product extends \Opencart\System\Engine\Model {
 			$sql .= "`product_option_value_id` = '" . (int)$data['product_option_value_id'] . "', ";
 		}
 
-		$sql .= "`product_option_id` = '" . (int)$product_option_id . "', `product_id` = '" . (int)$product_id . "', `option_id` = '" . (int)$option_id . "', `option_value_id` = '" . (int)$data['option_value_id'] . "', `quantity` = '" . (int)$data['quantity'] . "', `subtract` = '" . (int)$data['subtract'] . "', `price` = '" . (float)$data['price'] . "', `price_prefix` = '" . $this->db->escape($data['price_prefix']) . "', `points` = '" . (int)$data['points'] . "', `points_prefix` = '" . $this->db->escape($data['points_prefix']) . "', `weight` = '" . (float)$data['weight'] . "', `weight_prefix` = '" . $this->db->escape($data['weight_prefix']) . "'";
+		$sql .= "`product_option_id` = '" . (int)$product_option_id . "', `product_id` = '" . (int)$product_id . "', `option_id` = '" . (int)$option_id . "', `option_value_id` = '" . (int)$data['option_value_id'] . "', `quantity` = '" . (int)$data['quantity'] . "', `subtract` = '" . (int)$data['subtract'] . "', `price` = '" . (float)$data['price'] . "', `points` = '" . (int)$data['points'] . "', `weight` = '" . (float)$data['weight'] . "'";
 
 		$this->db->query($sql);
 
@@ -2125,9 +2178,15 @@ class Product extends \Opencart\System\Engine\Model {
 	 * $product_option_value_info = $this->model_catalog_product->getOptionValue($product_id, $product_option_value_id);
 	 */
 	public function getOptionValue(int $product_id, int $product_option_value_id): array {
-		$query = $this->db->query("SELECT `pov`.`option_value_id`, `ovd`.`name`, `pov`.`quantity`, `pov`.`subtract`, `pov`.`price`, `pov`.`price_prefix`, `pov`.`points`, `pov`.`points_prefix`, `pov`.`weight`, `pov`.`weight_prefix` FROM `" . DB_PREFIX . "product_option_value` `pov` LEFT JOIN `" . DB_PREFIX . "option_value` `ov` ON (`pov`.`option_value_id` = `ov`.`option_value_id`) LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ov`.`option_value_id` = `ovd`.`option_value_id`) WHERE `pov`.`product_id` = '" . (int)$product_id . "' AND `pov`.`product_option_value_id` = '" . (int)$product_option_value_id . "' AND `ovd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "'");
+		$query = $this->db->query("SELECT `pov`.`option_value_id`, `ovd`.`name`, `pov`.`quantity`, `pov`.`subtract`, `pov`.`price`, `pov`.`points`, `pov`.`weight` FROM `" . DB_PREFIX . "product_option_value` `pov` LEFT JOIN `" . DB_PREFIX . "option_value` `ov` ON (`pov`.`option_value_id` = `ov`.`option_value_id`) LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ov`.`option_value_id` = `ovd`.`option_value_id`) WHERE `pov`.`product_id` = '" . (int)$product_id . "' AND `pov`.`product_option_value_id` = '" . (int)$product_option_value_id . "' AND `ovd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "'");
 
 		return $query->row;
+	}
+
+	public function getOptionValues(int $product_id, int $product_option_id): array {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_option_value` `pov` LEFT JOIN `" . DB_PREFIX . "option_value` `ov` ON (`pov`.`option_value_id` = `ov`.`option_value_id`) LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ov`.`option_value_id` = `ovd`.`option_value_id`) WHERE `pov`.`product_id` = '" . (int)$product_id . "' AND `pov`.`product_option_id` = '" . (int)$product_option_id . "'");
+
+		return $query->rows;
 	}
 
 	/**

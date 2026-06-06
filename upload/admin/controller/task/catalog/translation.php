@@ -18,16 +18,7 @@ class Translation extends \Opencart\System\Engine\Controller {
 	public function index(array $args = []): array {
 		$this->load->language('task/catalog/translation');
 
-		// Clear old data
-		$task_data = [
-			'code'   => 'translation',
-			'action' => 'task/catalog/translation.clear',
-			'args'   => []
-		];
-
 		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
 
 		// Generate new data
 		$ignore = [
@@ -152,7 +143,7 @@ class Translation extends \Opencart\System\Engine\Controller {
 		$part = explode('/', $args['route']);
 
 		if ($part[0] == 'extension' && count($part) > 2) {
-			$language->addPath('extension/' . $part[1], DIR_EXTENSION . $part[1] . '/admin/language/');
+			$language->addPath('extension/' . $part[1], DIR_EXTENSION . $part[1] . '/catalog/language/');
 		}
 
 		$language->load($args['route']);
@@ -178,15 +169,14 @@ class Translation extends \Opencart\System\Engine\Controller {
 
 		$pos = strrpos($args['route'], '/');
 
-		$base = DIR_CATALOG . 'view/language/';
-		$directory = parse_url($store_info['url'], PHP_URL_HOST) . '/' . $language_info['code'] . '/'  .  substr($args['route'], 0, $pos) . '/';
-		$filename = substr($args['route'], $pos + 1) . '.json';
+		$directory = DIR_CATALOG . 'view/language/' . parse_url($store_info['url'], PHP_URL_HOST) . '/' . $language_info['code'] . '/'  .  substr($args['route'], 0, $pos) . '/';
+		$filename = substr($args['route'], $pos + 1) . '.yaml';
 
-		if (!oc_directory_create($base . $directory, 0777)) {
+		if (!oc_directory_create($directory, 0777)) {
 			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
 		}
 
-		if (!file_put_contents($base . $directory . $filename, json_encode($data))) {
+		if (!file_put_contents($directory . $filename, oc_yaml_encode($data))) {
 			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
 		}
 

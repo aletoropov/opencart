@@ -50,6 +50,14 @@ $_['text_password_uppercase']             = 'Uppercase';
 $_['text_password_lowercase']             = 'Lowercase';
 $_['text_password_number']                = 'Number';
 $_['text_password_symbol']                = 'Symbol';
+$_['text_order_status']                   = 'Order Status';
+$_['text_subscription_status']            = 'Subscription Status';
+$_['text_stock_status']                   = 'Stock Status';
+$_['text_length_class']                   = 'Length Class';
+$_['text_weight_class']                   = 'Weight Class';
+$_['text_return_status']                  = 'Return Status';
+$_['text_return_action']                  = 'Return Action';
+$_['text_return_reason']                  = 'Return Reason';
 
 // Entry
 $_['entry_meta_title']                    = 'Meta Title';
@@ -140,7 +148,6 @@ $_['entry_stock_warning']                 = 'Show Out Of Stock Warning';
 $_['entry_stock_checkout']                = 'Stock Checkout';
 $_['entry_stock_status']                  = 'Stock Status';
 $_['entry_affiliate_status']              = 'Affiliate Status';
-$_['entry_affiliate_group']               = 'Affiliate Group';
 $_['entry_affiliate_approval']            = 'Affiliate Requires Approval';
 $_['entry_affiliate_auto']                = 'Automatic Commission';
 $_['entry_affiliate_commission']          = 'Affiliate Commission (%)';

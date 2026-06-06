@@ -1,13 +1,34 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
-    async connected() {
+// Library
+const session = await loader.library('session');
+console.log(session);
+// Language
+const language = await loader.language('account/edit');
+
+export default class extends Controller {
+    render() {
+        let data = {};
+
+        data.wishlist = {};
+
+        let customer = session.get('customer');
+
+        if (session.has('customer')) {
+            data.wishlist = customer.get('wishlist');
+        }
+
+       return loader.template('account/wishlist', { ...data, ...language });
+    }
+
+    remove() {
+
 
     }
 }
 
-customElements.define('x-account', XAccount);
-
+/*
 $('#wishlist').on('click', '.btn-danger', function(e) {
     e.preventDefault();
 
@@ -40,3 +61,4 @@ $('#wishlist').on('click', '.btn-danger', function(e) {
         }
     });
 });
+*/

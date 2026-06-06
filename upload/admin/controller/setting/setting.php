@@ -33,6 +33,9 @@ class Setting extends \Opencart\System\Engine\Controller {
 			'href' => $this->url->link('setting/setting', 'user_token=' . $this->session->data['user_token'])
 		];
 
+
+
+
 		$data['save'] = $this->url->link('setting/setting.save', 'user_token=' . $this->session->data['user_token']);
 		$data['back'] = $this->url->link('setting/store', 'user_token=' . $this->session->data['user_token']);
 
@@ -98,6 +101,10 @@ class Setting extends \Opencart\System\Engine\Controller {
 		$data['config_location'] = (array)$this->config->get('config_location');
 
 		// Country / Zone
+		$this->load->model('localisation/country');
+
+		$data['countries'] = $this->model_localisation_country->getCountries();
+
 		$data['config_country_id'] = $this->config->get('config_country_id');
 		$data['config_country_list'] = $this->config->get('config_country_list');
 		$data['config_zone_id'] = $this->config->get('config_zone_id');
@@ -293,7 +300,6 @@ class Setting extends \Opencart\System\Engine\Controller {
 
 		// Affiliate
 		$data['config_affiliate_status'] = $this->config->get('config_affiliate_status');
-		$data['config_affiliate_group_id'] = $this->config->get('config_affiliate_group_id');
 		$data['config_affiliate_approval'] = $this->config->get('config_affiliate_approval');
 		$data['config_affiliate_auto'] = (bool)$this->config->get('config_affiliate_auto');
 		$data['config_affiliate_commission'] = (float)$this->config->get('config_affiliate_commission');

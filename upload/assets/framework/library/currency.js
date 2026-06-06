@@ -1,18 +1,25 @@
 import { loader } from './loader.js';
 
-const currencies = await loader.storage('localisation/currencies');
-
 export default class Currency {
-    static currencies = {};
-
-    async constructor() {
-        this.currencies = new Map(currencies.toArray());
+    constructor() {
+        this.currencies = loader.storage('localisation/currency');
     }
 
+    /**
+     * This function can prefix/suffix your string.
+     *
+     * @example
+     * el.format('foo', { prefix: '...' });
+     *
+     * @param {string} number String to format
+     * @param {string} code Mandatory and will be added before the string
+     * @param {string} value Optional and will be added after the string
+     * @param {string} format Optional and will be added after the string
+     */
     format(number, code, value = 0, format = true) {
-        if (!this.currencies.has(code)) return number;
+        if (!code in this.currencies) return number;
 
-        let currency = this.currencies.get(code);
+        let currency = this.currencies[code];
 
         value = parseFloat(value ? value : currency.value);
 
@@ -60,8 +67,8 @@ export default class Currency {
     }
 
     convert(value, from, to) {
-        if (!this.currencies.has(from) || !this.currencies.has(to)) return value;
+        if (!from in this.currencies || !to in this.currencies) return value;
 
-        return value * (this.currencies.get(to).value / this.currencies.get(from).value);
+        return value * (this.currencies[to].value / this.currencies[from].value);
     }
 }

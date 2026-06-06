@@ -1,12 +1,11 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
+export default class extends Controller {
     async connected() {
 
     }
 }
-
-customElements.define('x-account', XAccount);
 
 $('#button-send').on('click', function(e) {
     e.preventDefault();

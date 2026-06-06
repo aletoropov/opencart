@@ -1,12 +1,11 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XCheckout extends WebComponent {
+export default class extends Controller {
     async connected() {
 
     }
 }
-
-customElements.define('x-checkout', XCheckout);
 
 // Account
 $('input[name=\'account\']').on('click', function() {

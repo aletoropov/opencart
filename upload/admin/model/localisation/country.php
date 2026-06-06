@@ -277,6 +277,12 @@ class Country extends \Opencart\System\Engine\Model {
 		return $query->rows;
 	}
 
+	public function getCountriesByAddressFormatId(int $address_format_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "country` WHERE `address_format_id` = '" . (int)$address_format_id . "'");
+
+		return $query->rows;
+	}
+
 	/**
 	 * Get Total Countries
 	 *
@@ -456,10 +462,10 @@ class Country extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $country_id): array {
 		$country_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "country_description` WHERE `country_id` = '" . (int)$country_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `cd`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "country_description` `cd` WHERE `cd`.`country_id` = '" . (int)$country_id . "'");
 
 		foreach ($query->rows as $result) {
-			$country_description_data[$result['language_id']] = $result;
+			$country_description_data[$result['code']] = $result;
 		}
 
 		return $country_description_data;

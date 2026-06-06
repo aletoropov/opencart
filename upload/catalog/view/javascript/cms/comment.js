@@ -1,12 +1,15 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class CmsComment extends WebComponent {
-    async connected() {
+export default class extends Controller {
+    async render() {
+
+
+
+
 
     }
 }
-
-customElements.define('cms-comment', CmsComment);
 
 $('#comment').on('click', '.pagination a', function(e) {
     e.preventDefault();

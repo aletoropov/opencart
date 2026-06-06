@@ -3,13 +3,15 @@ namespace Opencart\Admin\Controller\Task\Admin;
 /**
  * Class Currency
  *
+ * Generates currency information for the admin.
+ *
  * @package Opencart\Admin\Controller\Task\Admin
  */
 class Currency extends \Opencart\System\Engine\Controller {
 	/**
 	 * Index
 	 *
-	 * Generate currency task list.
+	 * Generate currency list.
 	 *
 	 * @param array<string, string> $args
 	 *
@@ -18,44 +20,6 @@ class Currency extends \Opencart\System\Engine\Controller {
 	public function index(array $args = []): array {
 		$this->load->language('task/admin/currency');
 
-		// Clear old data
-		$task_data = [
-			'code'   => 'currency',
-			'action' => 'task/admin/currency.clear',
-			'args'   => []
-		];
-
-		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
-
-		// Create new data
-		$task_data = [
-			'code'   => 'currency',
-			'action' => 'task/admin/currency.list'
-		];
-
-		$this->model_setting_task->addTask($task_data);
-
-		return ['success' => $this->language->get('text_task')];
-	}
-
-	/**
-	 * List
-	 *
-	 * Generate JSON currency list file.
-	 *
-	 * @param array<string, string> $args
-	 *
-	 * @return array
-	 */
-	public function list(array $args = []): array {
-		$this->load->language('task/admin/currency');
-
-		$this->load->model('localisation/currency');
-
-		$currencies = $this->model_localisation_currency->getCurrencies();
-
 		$directory = DIR_APPLICATION . 'view/data/localisation/';
 		$filename = 'currency.json';
 
@@ -63,7 +27,9 @@ class Currency extends \Opencart\System\Engine\Controller {
 			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
 		}
 
-		if (!file_put_contents($directory . $filename, json_encode($currencies))) {
+		$this->load->model('localisation/currency');
+
+		if (!file_put_contents($directory . $filename, json_encode($this->model_localisation_currency->getCurrencies()))) {
 			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
 		}
 
@@ -102,32 +68,5 @@ class Currency extends \Opencart\System\Engine\Controller {
 		}
 
 		return ['success' => $this->language->get('text_refresh')];
-	}
-
-	/**
-	 * Clear
-	 *
-	 * Delete generated JSON currency files.
-	 *
-	 * @param array<string, string> $args
-	 *
-	 * @return array
-	 */
-	public function clear(array $args = []): array {
-		$this->load->language('task/admin/currency');
-
-		$this->load->model('localisation/language');
-
-		$languages = $this->model_localisation_language->getLanguages();
-
-		foreach ($languages as $language) {
-			$file = DIR_APPLICATION . 'view/data/' . $language['code'] . '/localisation/currency.json';
-
-			if (is_file($file)) {
-				unlink($file);
-			}
-		}
-
-		return ['success' => $this->language->get('text_clear')];
 	}
 }

@@ -68,10 +68,10 @@ class Attribute extends \Opencart\System\Engine\Model {
 	public function editAttributeGroup(int $attribute_group_id, array $data): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "attribute_group` SET `sort_order` = '" . (int)$data['sort_order'] . "' WHERE `attribute_group_id` = '" . (int)$attribute_group_id . "'");
 
-		$this->deleteDescriptions($attribute_group_id);
+		$this->model_catalog_attribute->deleteDescriptions($attribute_group_id);
 
 		foreach ($data['attribute_group_description'] as $language_id => $attribute_group_description) {
-			$this->addDescription($attribute_group_id, $language_id, $attribute_group_description);
+			$this->model_catalog_attribute->addDescription($attribute_group_id, $language_id, $attribute_group_description);
 		}
 
 		$this->model_catalog_attribute->deleteAttributes($attribute_group_id);
@@ -99,9 +99,8 @@ class Attribute extends \Opencart\System\Engine\Model {
 	public function deleteAttributeGroup(int $attribute_group_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "attribute_group` WHERE `attribute_group_id` = '" . (int)$attribute_group_id . "'");
 
-		$this->model_catalog_attribute_group->deleteDescriptions($attribute_group_id);
-
-		$this->deleteAttributes($attribute_group_id);
+		$this->model_catalog_attribute->deleteDescriptions($attribute_group_id);
+		$this->model_catalog_attribute->deleteAttributes($attribute_group_id);
 	}
 
 	/**
@@ -204,17 +203,10 @@ class Attribute extends \Opencart\System\Engine\Model {
 	 * $attribute_group_total = $this->model_catalog_attribute_group->getTotalAttributeGroups();
 	 */
 	public function getTotalAttributeGroups(array $data = []): int {
-		if (!empty($data['filter_language_id'])) {
-			$language_id = $data['filter_language_id'];
-		} else {
-			$language_id = $this->config->get('config_language_id');
-		}
-
-		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "attribute_group` `ag` LEFT JOIN `" . DB_PREFIX . "attribute_group_description` `agd` ON (`ag`.`attribute_group_id` = `agd`.`attribute_group_id`) WHERE `agd`.`language_id` = '" . (int)$language_id . "'");
+		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "attribute_group` `ag`");
 
 		return (int)$query->row['total'];
 	}
-
 
 	/**
 	 * Add Description
@@ -299,10 +291,10 @@ class Attribute extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $attribute_group_id): array {
 		$attribute_group_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "attribute_group_description` WHERE `attribute_group_id` = '" . (int)$attribute_group_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `agd`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "attribute_group_description` `agd` WHERE `agd`.`attribute_group_id` = '" . (int)$attribute_group_id . "'");
 
 		foreach ($query->rows as $result) {
-			$attribute_group_data[$result['language_id']] = $result;
+			$attribute_group_data[$result['code']] = $result;
 		}
 
 		return $attribute_group_data;
@@ -351,68 +343,46 @@ class Attribute extends \Opencart\System\Engine\Model {
 	 * $attribute_id = $this->model_catalog_attribute->addAttribute($attribute_data);
 	 */
 	public function addAttribute($attribute_group_id, array $data): int {
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "attribute` SET `attribute_group_id` = '" . (int)$attribute_group_id . "', `sort_order` = '" . (int)$data['sort_order'] . "'");
+		if ($data['attribute_id']) {
+			$this->db->query("INSERT INTO `" . DB_PREFIX . "attribute` SET `attribute_id` = '" . (int)$data['attribute_id'] . "', `attribute_group_id` = '" . (int)$attribute_group_id . "', `sort_order` = '" . (int)$data['sort_order'] . "'");
 
-		$attribute_id = $this->db->getLastId();
+			$attribute_id = $data['attribute_id'];
+		} else {
+			$this->db->query("INSERT INTO `" . DB_PREFIX . "attribute` SET `attribute_group_id` = '" . (int)$attribute_group_id . "', `sort_order` = '" . (int)$data['sort_order'] . "'");
+
+			$attribute_id = $this->db->getLastId();
+		}
 
 		foreach ($data['attribute_description'] as $language_id => $attribute_description) {
-			$this->model_catalog_attribute->addDescription($attribute_id, $language_id, $attribute_description);
+			$this->model_catalog_attribute->addAttributeDescription($attribute_id, $language_id, $attribute_description);
 		}
 
 		return $attribute_id;
 	}
 
 	/**
-	 * Edit Attribute
-	 *
-	 * Edit attribute record in the database.
-	 *
-	 * @param int                  $attribute_id primary key of the attribute record
-	 * @param array<string, mixed> $data         array of data
-	 *
-	 * @return void
-	 *
-	 * @example
-	 *
-	 * $attribute_data = [
-	 *     'attribute_description' => [],
-	 *     'attribute_group_id'    => 1,
-	 *     'sort_order'            => 0
-	 * ];
-	 *
-	 * $this->load->model('catalog/attribute');
-	 *
-	 * $this->model_catalog_attribute->editAttribute($attribute_id, $attribute_data);
-	 */
-	public function editAttribute(int $attribute_id, array $data): void {
-		$this->db->query("UPDATE `" . DB_PREFIX . "attribute` SET `attribute_group_id` = '" . (int)$data['attribute_group_id'] . "', `sort_order` = '" . (int)$data['sort_order'] . "' WHERE `attribute_id` = '" . (int)$attribute_id . "'");
-
-		$this->model_catalog_attribute->deleteDescriptions($attribute_id);
-
-		foreach ($data['attribute_description'] as $language_id => $attribute_description) {
-			$this->model_catalog_attribute->addDescription($attribute_id, $language_id, $attribute_description);
-		}
-	}
-
-	/**
-	 * Delete Attribute
+	 * Delete Attributes
 	 *
 	 * Delete attribute record in the database.
 	 *
-	 * @param int $attribute_id primary key of the attribute record
+	 * @param int $filter_id primary key of the filter record
 	 *
 	 * @return void
 	 *
 	 * @example
 	 *
-	 * $this->load->model('catalog/attribute');
+	 * $this->load->model('catalog/filter');
 	 *
-	 * $this->model_catalog_attribute->deleteAttribute($attribute_id);
+	 * $this->model_catalog_filter->deleteFilter($filter_id);
 	 */
-	public function deleteAttribute(int $attribute_id): void {
-		$this->db->query("DELETE FROM `" . DB_PREFIX . "attribute` WHERE `attribute_id` = '" . (int)$attribute_id . "'");
+	public function deleteAttributes(int $attribute_group_id): void {
+		$results = $this->model_catalog_attribute->getAttributes(['filter_attribute_group_id' => $attribute_group_id]);
 
-		$this->model_catalog_attribute->deleteDescriptions($attribute_id);
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "attribute` WHERE `attribute_group_id` = '" . (int)$attribute_group_id . "'");
+
+		foreach ($results as $result) {
+			$this->model_catalog_attribute->deleteAttributeDescriptions($result['attribute_id']);
+		}
 	}
 
 	/**
@@ -550,27 +520,6 @@ class Attribute extends \Opencart\System\Engine\Model {
 	}
 
 	/**
-	 * Get Total Attributes By Attribute Group ID
-	 *
-	 * Get the total number of attributes by attribute group records in the database.
-	 *
-	 * @param int $attribute_group_id foreign key of the attribute group record
-	 *
-	 * @return int total number of attribute records that have attribute group ID
-	 *
-	 * @example
-	 *
-	 * $this->load->model('catalog/attribute');
-	 *
-	 * $attribute_total = $this->model_catalog_attribute->getTotalAttributesByAttributeGroupId($attribute_group_id);
-	 */
-	public function getTotalAttributesByAttributeGroupId(int $attribute_group_id): int {
-		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "attribute` WHERE `attribute_group_id` = '" . (int)$attribute_group_id . "'");
-
-		return (int)$query->row['total'];
-	}
-
-	/**
 	 * Add Description
 	 *
 	 * Create a new attribute description record in the database.
@@ -673,10 +622,10 @@ class Attribute extends \Opencart\System\Engine\Model {
 	public function getAttributeDescriptions(int $attribute_id): array {
 		$attribute_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "attribute_description` WHERE `attribute_id` = '" . (int)$attribute_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `ad`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "attribute_description` `ad` WHERE `ad`.`attribute_id` = '" . (int)$attribute_id . "'");
 
 		foreach ($query->rows as $result) {
-			$attribute_data[$result['language_id']] = $result;
+			$attribute_data[$result['code']] = $result;
 		}
 
 		return $attribute_data;

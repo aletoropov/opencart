@@ -1,11 +1,11 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
 // library
 const local = await loader.library('local');
 
 // Config
-const config = await loader.config('catalog');
+const config = await loader.config('default');
 
 // Language
 const language = await loader.language('common/language');
@@ -13,8 +13,8 @@ const language = await loader.language('common/language');
 // Storage
 const languages = await loader.storage('localisation/language');
 
-class CommonLanguage extends WebComponent {
-    connected() {
+export default class extends Controller {
+    render() {
         let data = {};
 
         // Config stored language code
@@ -35,29 +35,16 @@ class CommonLanguage extends WebComponent {
 
         data.languages = Object.values(languages);
 
-        let response = loader.template('common/language', { ...data,  ...language });
-
-        response.then(this.render.bind(this));
-        response.then(this.addEvent.bind(this));
+        return loader.template('common/language', { ...data,  ...language });
     }
 
-    render(html) {
-        this.innerHTML = html;
-    }
+    onClick(e) {
+        e.preventDefault();
 
-    addEvent() {
-        let form = document.getElementById('form-language');
+        let code = e.target.getAttribute('href');
 
-        let elements = form.querySelectorAll('a');
+        local.set('language', code);
 
-        for (let element of elements) {
-            element.addEventListener('click', this.onClick);
-        }
-    }
-
-    async onClick(e) {
-        local.set('language', e.target.getAttribute('href'));
+        this.update();
     }
 }
-
-customElements.define('common-language', CommonLanguage);

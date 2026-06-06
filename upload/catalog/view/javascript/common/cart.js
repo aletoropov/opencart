@@ -1,41 +1,37 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
-// library
-const cart = await loader.library('cart');
-
 // Config
-const config = await loader.config('catalog');
+const config = await loader.config('default');
 
 // Language
 const language = await loader.language('common/cart');
 
-class CommonCart extends WebComponent {
-    async connected() {
+// library
+const cart = await loader.library('cart');
+const local = await loader.library('local');
+const tax = await loader.library('tax');
+
+// Currency
+const currency = local.has('currency') ? local.get('currency') : config.config_currency;
+
+export default class extends Controller {
+    render() {
         let data = {};
 
-        let response = loader.template('common/cart', { ...data,  ...language });
+        data.currency = currency;
 
-        response.then(this.render.bind(this));
-        response.then(this.addEvent.bind(this));
-    };
-
-    render(html) {
-        this.innerHTML = html;
-    }
-
-    addEvent() {
-        let form = document.getElementById('form-cart');
-
-        form.addEventListener('submit', this.onSubmit);
+        return loader.template('common/cart', { ...data,  ...language });
     }
 
     onSubmit(e) {
         e.preventDefault();
 
-        this.request.fetch({
+        loader.request({
+            onComplete: () => {
 
+
+            }
         });
     }
 }
-

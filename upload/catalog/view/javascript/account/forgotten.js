@@ -1,9 +1,20 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
-    async connected() {
+// Config
+const config = await loader.config('default');
+
+// Language
+const language = await loader.language('account/edit');
+
+export default class extends Controller {
+    render() {
+
+        return loader.template('account/forgotten', { ...language });
+    }
+
+    confirm(e) {
+        e.preventDefault();
 
     }
 }
-
-customElements.define('x-account', XAccount);

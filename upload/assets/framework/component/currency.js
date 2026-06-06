@@ -1,12 +1,12 @@
 import { WebComponent } from '../component.js';
+import { loader } from '../index.js';
 
-class XCurrency extends WebComponent {
+customElements.define('x-currency', class extends WebComponent {
     static observed = [
         'code',
         'amount',
         'value'
     ];
-    currencies = [];
 
     get code() {
         return this.getAttribute('code');
@@ -24,37 +24,13 @@ class XCurrency extends WebComponent {
         this.setAttribute('amount', amount);
     }
 
-    get symbol_left() {
-        if (this.currencies[this.code]) {
-            return this.currencies[this.code]['symbol_left'];
-        } else {
-            return '';
-        }
-    }
-
-    get symbol_right() {
-        if (this.currencies[this.code]) {
-            return this.currencies[this.code]['symbol_right'];
-        } else {
-            return '';
-        }
-    }
-
-    get decimal_place() {
-        if (this.currencies[this.code]) {
-            return this.currencies[this.code]['decimal_place'];
-        } else {
-            return 2;
-        }
-    }
-
     get value() {
         if (this.hasAttribute('value')) {
-            return parseFloat(this.getAttribute('value')).toFixed(this.decimal_place);
+            return parseFloat(this.getAttribute('value')).toFixed(this.currency.decimal_place);
         }
 
-        if (this.currencies[this.code]) {
-            return this.currencies[this.code]['value'];
+        if (this.code in currencies) {
+            return currencies[this.code].value;
         } else {
             return 1.00000;
         }
@@ -65,23 +41,14 @@ class XCurrency extends WebComponent {
     }
 
     async connected() {
-        this.addEventListener('[code]', this.render);
-        this.addEventListener('[amount]', this.render);
-        this.addEventListener('[value]', this.render);
+        // Library
+        this.currency = await loader.library('currency');
 
-        let response = this.storage.fetch('localisation/currency');
-
-        response.then(this.event.onloaded);
-        response.then(this.event.format);
+        // Storage
+        this.currencies = await loader.storage('localisation/currency');
     }
 
-    onloaded(currencies) {
-        this.currencies = currencies;
+    async render() {
+        return this.currency.format(this.value, this.code);
     }
-
-    render() {
-        this.innerHTML = this.currency.format(this.value, this.code);
-    }
-}
-
-customElements.define('x-currency', XCurrency);
+});

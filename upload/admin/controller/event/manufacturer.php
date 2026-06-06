@@ -11,7 +11,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new manufacturer data.
 	 *
-	 * Called using model/catalog/manufacturer/addManufacturer/after
+	 * Trigger model/catalog/manufacturer/addManufacturer/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -20,25 +20,32 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addManufacturer(string &$route, array &$args, &$output): void {
-		// List
-		$task_data = [
-			'code'   => 'manufacturer.list',
-			'action' => 'task/catalog/manufacturer.list',
-			'args'   => []
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-		// Info
-		$task_data = [
-			'code'   => 'manufacturer.info.' . $output,
-			'action' => 'task/catalog/manufacturer.info',
-			'args'   => ['manufacturer_id' => $output]
-		];
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'manufacturer.' . $store_id,
+				'action' => 'task/catalog/manufacturer',
+				'args'   => ['store_id' => $store_id]
+			];
 
-		$this->model_setting_task->addTask($task_data);
+			$this->model_setting_task->addTask($task_data);
+
+			// Info
+			$task_data = [
+				'code'   => 'manufacturer.info.' . $store_id . '.' . $output,
+				'action' => 'task/catalog/manufacturer.info',
+				'args'   => [
+					'manufacturer_id' => $output,
+					'store_id'        => $store_id
+				]
+			];
+
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 
 	/**
@@ -46,7 +53,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new manufacturer data.
 	 *
-	 * Called using model/catalog/manufacturer/editManufacturer/after
+	 * Trigger model/catalog/manufacturer/editManufacturer/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -55,39 +62,51 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function editManufacturer(string &$route, array &$args, &$output): void {
-		// List
-		$task_data = [
-			'code'   => 'manufacturer.list',
-			'action' => 'task/catalog/manufacturer.list',
-			'args'   => []
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
-
-		// Info
-		$task_data = [
-			'code'   => 'manufacturer.info.' . $args[0],
-			'action' => 'task/catalog/manufacturer.info',
-			'args'   => ['manufacturer_id' => $args[0]]
-		];
-
-		$this->model_setting_task->addTask($task_data);
 
 		// Products
 		$this->load->model('catalog/product');
 
-		$results = $this->model_catalog_product->getProductsByManufacturerId($args[0]);
+		$results = $this->model_catalog_product->getProducts(['filter_manufacturer_id' => $args[0]]);
 
-		foreach ($results as $result) {
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
+
+		foreach ($store_ids as $store_id) {
 			$task_data = [
-				'code'   => 'product.info.' . $result['product_id'],
-				'action' => 'task/catalog/product.info',
-				'args'   => ['product_id' => $result['product_id']]
+				'code'   => 'manufacturer.' . $store_id,
+				'action' => 'task/catalog/manufacturer',
+				'args'   => ['store_id' => $store_id]
+			];
+
+			$this->load->model('setting/task');
+
+			$this->model_setting_task->addTask($task_data);
+
+			// Info
+			$task_data = [
+				'code'   => 'manufacturer.info.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/manufacturer.info',
+				'args'   => [
+					'manufacturer_id' => $args[0],
+					'store_id'        => $store_id
+				]
 			];
 
 			$this->model_setting_task->addTask($task_data);
+
+			foreach ($results as $result) {
+				$task_data = [
+					'code'   => 'product.' . $store_id . '.' . $result['product_id'],
+					'action' => 'task/catalog/product',
+					'args'   => [
+						'product_id' => $result['product_id'],
+						'store_id'   => $store_id
+					]
+				];
+
+				$this->model_setting_task->addTask($task_data);
+			}
 		}
 	}
 
@@ -96,7 +115,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new manufacturer data.
 	 *
-	 * Called using model/catalog/manufacturer/editManufacturer/after
+	 * Trigger model/catalog/manufacturer/editManufacturer/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -105,38 +124,29 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function deleteManufacturer(string &$route, array &$args, &$output): void {
-		// List
-		$task_data = [
-			'code'   => 'manufacturer.list',
-			'action' => 'task/catalog/manufacturer.list',
-			'args'   => []
-		];
-
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->model_setting_task->addTask($task_data);
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-		// Delete
-		$task_data = [
-			'code'   => 'manufacturer.delete.' . $args[0],
-			'action' => 'task/catalog/manufacturer.delete',
-			'args'   => ['manufacturer_id' => $args[0]]
-		];
-
-		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
-
-		// Products
-		$this->load->model('catalog/product');
-
-		$results = $this->model_catalog_product->getProductsByManufacturerId($args[0]);
-
-		foreach ($results as $result) {
+		foreach ($store_ids as $store_id) {
+			// List
 			$task_data = [
-				'code'   => 'product.info.' . $result['product_id'],
-				'action' => 'task/catalog/product.info',
-				'args'   => ['product_id' => $result['product_id']]
+				'code'   => 'manufacturer.' . $store_id,
+				'action' => 'task/catalog/manufacturer',
+				'args'   => []
+			];
+
+			$this->model_setting_task->addTask($task_data);
+
+			// Delete
+			$task_data = [
+				'code'   => 'manufacturer.delete.' . $store_id . '.' . $args[0],
+				'action' => 'task/catalog/manufacturer.delete',
+				'args'   => [
+					'manufacturer_id' => $args[0],
+					'store_id'        => $store_id
+				]
 			];
 
 			$this->model_setting_task->addTask($task_data);

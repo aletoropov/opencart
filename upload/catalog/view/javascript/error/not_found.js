@@ -1,9 +1,7 @@
-import { WebComponent } from '../component.js';
 
-class ErrorNotFound extends WebComponent {
+
+export default class extends Controller {
     async connected() {
 
     }
 }
-
-customElements.define('error-not-found', ErrorNotFound);

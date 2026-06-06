@@ -1,17 +1,17 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
-// library
-const session = await loader.library('session');
-
 // Config
-const config = await loader.config('catalog');
+const config = await loader.config('default');
 
 // Language
 const language = await loader.language('common/header');
 
-class CommonHeader extends WebComponent {
-    async connected() {
+// library
+const session = await loader.library('session');
+
+export default class extends Controller {
+    async render() {
         let data = {};
 
         data.wishlist = 0;
@@ -22,8 +22,14 @@ class CommonHeader extends WebComponent {
             data.wishlist = session.get('customer').getWishlist().length;
         }
 
-        this.innerHTML = await loader.template('common/header', { ...data, ...language, ...config });
+        return await loader.template('common/header', { ...data, ...language, ...config });
+    }
+
+    onClick(e) {
+        e.preventDefault();
+
+        let target = document.getElementById('content');
+
+        target.src = e.target.getAttribute('href');
     }
 }
-
-customElements.define('common-header', CommonHeader);

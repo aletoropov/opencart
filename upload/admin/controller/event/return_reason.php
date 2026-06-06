@@ -11,9 +11,9 @@ class ReturnReason extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new return reason list
 	 *
-	 * model/localisation/return_reason/addReturnReason/after
-	 * model/localisation/return_reason/editReturnReason/after
-	 * model/localisation/return_reason/deleteReturnReason/after
+	 * Triggered using model/localisation/return_reason/addReturnReason/after
+	 * Triggered using model/localisation/return_reason/editReturnReason/after
+	 * Triggered using model/localisation/return_reason/deleteReturnReason/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -22,22 +22,18 @@ class ReturnReason extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function index(string &$route, array &$args, &$output): void {
-		$task_data = [
-			'code'   => 'return_reason',
-			'action' => 'task/catalog/return_reason',
-			'args'   => []
-		];
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-		$this->load->model('setting/task');
+		foreach ($store_ids as $store_id) {
+			$task_data = [
+				'code'   => 'return_reason',
+				'action' => 'task/catalog/return_reason',
+				'args'   => []
+			];
 
-		$this->model_setting_task->addTask($task_data);
+			$this->load->model('setting/task');
 
-		$task_data = [
-			'code'   => 'return_reason',
-			'action' => 'task/admin/return_reason',
-			'args'   => []
-		];
-
-		$this->model_setting_task->addTask($task_data);
+			$this->model_setting_task->addTask($task_data);
+		}
 	}
 }

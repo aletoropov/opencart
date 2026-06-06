@@ -3,139 +3,170 @@ namespace Opencart\Admin\Controller\Task\Catalog;
 /**
  * Class Information
  *
- * @package Opencart\Admin\Controller\Task\Admin
+ * Generates information for all stores.
+ *
+ * @package Opencart\Admin\Controller\Task\Catalog
  */
 class Information extends \Opencart\System\Engine\Controller {
 	/**
-	 * Index
+	 * List
 	 *
-	 * Generate information task list.
+	 * Generate information list task for each store and language.
 	 *
 	 * @param array<string, string> $args
 	 *
 	 * @return array
 	 */
 	public function index(array $args = []): array {
-		$this->load->language('task/admin/information');
+		$this->load->language('task/catalog/information');
 
-		// Clear old data
-		$task_data = [
-			'code'   => 'information',
-			'action' => 'task/catalog/information.clear',
-			'args'   => []
-		];
-
-		$this->load->model('setting/task');
-
-		$this->model_setting_task->addTask($task_data);
-
-		// List
-		$task_data = [
-			'code'   => 'information',
-			'action' => 'task/catalog/information.list',
-			'args'   => []
-		];
-
-		$this->model_setting_task->addTask($task_data);
-
-		// Info
-		$this->load->model('catalog/information');
-
-		$informations = $this->model_catalog_information->getInformations();
-
-		foreach ($informations as $information) {
-			$task_data = [
-				'code'   => 'information',
-				'action' => 'task/catalog/information.info',
-				'args'   => ['information_id' => $information['information_id']]
-			];
-
-			$this->model_setting_task->addTask($task_data);
-		}
-
-		return ['success' => $this->language->get('text_task')];
-	}
-
-	/**
-	 * List
-	 *
-	 * Generate JSON information list file.
-	 *
-	 * @param array<string, string> $args
-	 *
-	 * @return array
-	 */
-	public function list(array $args = []): array {
-		$this->load->language('task/admin/information');
-
-		$this->load->model('catalog/information');
-
-		$informations = $this->model_catalog_information->getInformations();
-
-		$Stores = $this->model_catalog_information->getStores();
-
-		// Stores
-		$stores = [];
-
-		$stores[] = [
+		// Store
+		$store_info = [
 			'store_id' => 0,
 			'name'     => $this->config->get('config_name'),
 			'url'      => HTTP_CATALOG
 		];
 
-		$this->load->model('setting/store');
+		if ($args['store_id']) {
+			$this->load->model('setting/store');
 
-		$stores = array_merge($stores, $this->model_setting_store->getStores());
+			$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
 
-		foreach ($stores as $store) {
-			$customer_groups = $this->model_setting_setting->getValue('config_customer_group_list', $store['store_id']);
+			if (!$store_info) {
+				return ['error' => $this->language->get('error_store')];
+			}
+		}
 
-
-
-
-
+		// Information
 		$information_data = [];
+
+		$filter_data = [
+			'filter_store_id' => $store_info['store_id'],
+			'filter_status'   => true,
+			'sort'            => 'sort_order',
+			'order'           => 'ASC',
+		];
 
 		$this->load->model('catalog/information');
 
-		$informations = $this->model_catalog_information->getInformations();
+		$results = $this->model_catalog_information->getInformations($filter_data);
 
-		foreach ($informations as $information) {
-			$information_data[] = $information + ['description' => $this->model_localisation_country->getDesciptions($information['information_id'])];
+		foreach ($results as $result) {
+			$description_data = [];
 
-			$task_data = [
-				'code'   => 'information',
-				'action' => 'task/admin/information.info',
-				'args'   => ['information_id' => $information['information_id']]
+			$descriptions = $this->model_catalog_information->getDescriptions($result['information_id']);
+
+			foreach ($descriptions as $code => $description) {
+				$description_data[$code] = ['title' => $description['title']];
+			}
+
+			$information_data[] = [
+				'information_id' => $result['information_id'],
+				'description'    => $description_data
 			];
-
-			$this->model_setting_task->addTask($task_data);
 		}
 
-		$sort_order = [];
-
-		foreach ($information_data as $key => $value) {
-			$sort_order[$key] = $value['name'];
-		}
-
-		array_multisort($sort_order, SORT_ASC, $information_data);
-
-		$directory = DIR_APPLICATION . 'view/data/information/';
-		$filename = 'information.json';
+		$directory = DIR_CATALOG . 'view/data/' . parse_url($store_info['url'], PHP_URL_HOST) . '/catalog/';
+		$filename = 'information.yaml';
 
 		if (!oc_directory_create($directory, 0777)) {
 			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
 		}
 
-		if (!file_put_contents($directory . $filename, json_encode($information_data))) {
+		if (!file_put_contents($directory . $filename, oc_yaml_encode($information_data))) {
 			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
 		}
 
-		return ['success' => $this->language->get('text_list')];
+		return ['success' => sprintf($this->language->get('text_list'), $store_info['name'])];
 	}
 
+	/**
+	 * Info
+	 *
+	 * Generate information data by information ID.
+	 *
+	 * @param array<string, string> $args
+	 *
+	 * @return array
+	 */
 	public function info(array $args = []): array {
-		$this->load->language('task/admin/information');
+		$this->load->language('task/catalog/information');
+
+		if (!array_key_exists('information_id', $args)) {
+			return ['error' => $this->language->get('error_required')];
+		}
+
+		// Store
+		$store_info = [
+			'store_id' => 0,
+			'name'     => $this->config->get('config_name'),
+			'url'      => HTTP_CATALOG
+		];
+
+		if ($args['store_id']) {
+			$this->load->model('setting/store');
+
+			$store_info = $this->model_setting_store->getStore((int)$args['store_id']);
+
+			if (!$store_info) {
+				return ['error' => $this->language->get('error_store')];
+			}
+		}
+
+		// Information
+		$this->load->model('catalog/information');
+
+		$information_info = $this->model_catalog_information->getInformation((int)$args['information_id']);
+
+		if (!$information_info || !$information_info['status'] || !in_array($information_info['information_id'], $this->model_catalog_information->getStores($information_info['information_id']))) {
+			return ['error' => $this->language->get('error_information')];
+		}
+
+		// Description
+		$description_data = [];
+
+		$descriptions = $this->model_catalog_information->getDescriptions($information_info['information_id']);
+
+		foreach ($descriptions as $code => $description) {
+			$description_data[$code] = [
+				'title'            => $description['title'],
+				'description'      => $description['description'],
+				'meta_title'       => $description['meta_title'],
+				'meta_description' => $description['meta_description'],
+				'meta_keyword'     => $description['meta_keyword']
+			];
+		}
+
+		$information_data = [
+			'information_id' => $information_info['information_id'],
+			'description'    => $description_data
+		];
+
+		$directory = DIR_CATALOG . 'view/data/' . parse_url($store_info['url'], PHP_URL_HOST) . '/catalog/';
+		$filename = 'information-' . $information_info['information_id'] . '.yaml';
+
+		if (!oc_directory_create($directory, 0777)) {
+			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
+		}
+
+		if (!file_put_contents($directory . $filename, oc_yaml_encode($information_data))) {
+			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
+		}
+
+		return ['success' => sprintf($this->language->get('text_info'), $store_info['name'], $information_info['title'])];
+	}
+
+	/**
+	 * Delete
+	 *
+	 * Delete generated JSON information files.
+	 *
+	 * @param array<string, string> $args
+	 *
+	 * @return array
+	 */
+	public function delete(array $args = []): array {
+		$this->load->language('task/catalog/information');
 
 		if (!array_key_exists('information_id', $args)) {
 			return ['error' => $this->language->get('error_required')];
@@ -149,40 +180,18 @@ class Information extends \Opencart\System\Engine\Controller {
 			return ['error' => $this->language->get('error_information')];
 		}
 
-		$information_info = $information_info + ['description' => $this->model_catalog_information->getDescriptions($information_info['information_id'])];
+		$this->load->model('setting/store');
 
-		$directory = DIR_APPLICATION . 'view/data/catalog/';
-		$filename = 'information-' . $information_info['information_id'] . '.json';
+		$store_urls = [HTTP_CATALOG, ...array_column($this->model_setting_store->getStores(), 'url')];
 
-		if (!oc_directory_create($directory, 0777)) {
-			return ['error' => sprintf($this->language->get('error_directory'), $directory)];
+		foreach ($store_urls as $store_url) {
+			$file = DIR_CATALOG . 'view/data/' . parse_url($store_url, PHP_URL_HOST) . '/information/information-' . $information_info['information_id'] . '.yaml';
+
+			if (is_file($file)) {
+				unlink($file);
+			}
 		}
 
-		if (!file_put_contents($directory . $filename, json_encode($information_info))) {
-			return ['error' => sprintf($this->language->get('error_file'), $directory . $filename)];
-		}
-
-		return ['success' => sprintf($this->language->get('text_info'), $information_info['name'])];
-	}
-
-	/**
-	 * Clear
-	 *
-	 * Delete generated JSON information files.
-	 *
-	 * @param array<string, string> $args
-	 *
-	 * @return array
-	 */
-	public function clear(array $args = []): array {
-		$this->load->language('task/admin/information');
-
-		$file = HTTP_SERVER . 'view/data/admin/information.json';
-
-		if (is_file($file)) {
-			unlink($file);
-		}
-
-		return ['success' => $this->language->get('text_clear')];
+		return ['success' => sprintf($this->language->get('text_delete'), $information_info['title'])];
 	}
 }

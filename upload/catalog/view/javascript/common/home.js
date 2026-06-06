@@ -1,11 +1,16 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
-class CommonHome extends WebComponent {
-    async connected() {
+export default class extends Controller {
+    render() {
+        return loader.template('common/home');
+    }
 
-        this.innerHTML = loader.template('common/home', { ...data, ...language });
+    onClick(e) {
+        e.preventDefault();
+
+        let target = document.getElementById('content');
+
+        target.src = e.target.getAttribute('href');
     }
 }
-
-customElements.define('common-home', CommonHome);

@@ -1,9 +1,13 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class CatalogCategory extends WebComponent {
-    async connected() {
+// Language
+const language = loader.language('catalog/category');
 
+export default class extends Controller {
+    render() {
+        let data = {};
+
+        return loader.template('catalog/category', { ...data, ...language });
     }
 }
-
-customElements.define('catalog-category', CatalogCategory);

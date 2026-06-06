@@ -1,8 +1,8 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
 import { loader } from '../index.js';
 
 // Config
-const config = await loader.config('catalog');
+const config = await loader.config('default');
 
 // Language
 const language = await loader.language('common/footer');
@@ -13,8 +13,8 @@ const articles = await loader.storage('cms/article-1');
 // Information
 const informations = await loader.storage('information/information');
 
-class CommonFooter extends WebComponent {
-    async connected() {
+export default class extends Controller {
+    async render() {
         let data = {};
 
         // Articles
@@ -23,12 +23,22 @@ class CommonFooter extends WebComponent {
         // Information Pages
         data.informations = Object.values(informations);
 
+        data.gdpr = config.config_gdpr_id ? true : false;
+        data.affiliate = config.config_affiliate_status ? true : false;
+
         let date = new Date();
 
         data.year = date.getFullYear();
 
-        this.innerHTML = await loader.template('common/footer', { ...data, ...language, ...config });
+        return await loader.template('common/footer', { ...data, ...language, ...config });
+    }
+
+    onClick(e) {
+        e.preventDefault();
+
+        let target = document.getElementById('content');
+
+        target.src = e.target.getAttribute('href');
     }
 }
 
-customElements.define('common-footer', CommonFooter);

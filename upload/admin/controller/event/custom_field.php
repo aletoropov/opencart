@@ -11,7 +11,7 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new customer group data with the updated customer fields.
 	 *
-	 * Called using model/customer/custom_field/addCustomField/after
+	 * Trigger model/customer/custom_field/addCustomField/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -20,30 +20,29 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addCustomField(string &$route, array &$args, &$output): void {
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->load->model('setting/custom_field');
+		$this->load->model('customer/custom_field');
 
-		$results = $this->model_setting_custom_field->getCustomerGroups($output);
+		$results = $this->model_customer_custom_field->getCustomerGroups($output);
 
-		foreach ($results as $result) {
-			$task_data = [
-				'code'   => 'customer_group.info',
-				'action' => 'task/catalog/customer_group',
-				'args'   => ['customer_group_id' => $result['customer_group_id']]
-			];
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-			$this->model_setting_task->addTask($task_data);
+		foreach ($store_ids as $store_id) {
+			foreach ($results as $result) {
+				$task_data = [
+					'code'   => 'customer_group.info.' . $store_id . '.' . $result['customer_group_id'],
+					'action' => 'task/catalog/customer_group',
+					'args'   => [
+						'customer_group_id' => $result['customer_group_id'],
+						'store_id'          => $store_id
+					]
+				];
+
+				$this->model_setting_task->addTask($task_data);
+			}
 		}
-		/*
-		$task_data = [
-			'code'   => 'admin.customer_group',
-			'action' => 'task/admin/customer_group',
-			'args'   => []
-		];
-
-		$this->model_setting_task->addTask($task_data);
-		*/
 	}
 
 	/**
@@ -51,7 +50,7 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new customer group data with the updated customer fields.
 	 *
-	 * Called using model/customer/custom_field/editCustomField/after
+	 * Trigger model/customer/custom_field/editCustomField/after
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -60,31 +59,29 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function editCustomField(string &$route, array &$args, &$output): void {
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->load->model('setting/custom_field');
+		$this->load->model('customer/custom_field');
 
-		$results = $this->model_setting_custom_field->getCustomerGroups($output);
+		$results = $this->model_customer_custom_field->getCustomerGroups($args[0]);
 
-		foreach ($results as $result) {
-			$task_data = [
-				'code'   => 'customer_group',
-				'action' => 'task/catalog/customer_group',
-				'args'   => []
-			];
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-			$this->model_setting_task->addTask($task_data);
+		foreach ($store_ids as $store_id) {
+			foreach ($results as $result) {
+				$task_data = [
+					'code'   => 'customer_group.info.' . $store_id . '.' . $result['customer_group_id'],
+					'action' => 'task/catalog/customer_group',
+					'args'   => [
+						'customer_group_id' => $result['customer_group_id'],
+						'store_id'          => $store_id
+					]
+				];
+
+				$this->model_setting_task->addTask($task_data);
+			}
 		}
-
-		/*
-		$task_data = [
-			'code'   => 'customer_group',
-			'action' => 'task/admin/customer_group',
-			'args'   => []
-		];
-
-		$this->model_setting_task->addTask($task_data);
-		*/
 	}
 
 	/**
@@ -92,7 +89,7 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new customer group data with the updated customer fields.
 	 *
-	 * Called using model/customer/custom_field/deleteCustomField/after
+	 * Trigger model/customer/custom_field/deleteCustomField/before
 	 *
 	 * @param string            $route
 	 * @param array<int, mixed> $args
@@ -101,30 +98,28 @@ class CustomField extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function deleteCustomField(string &$route, array &$args, &$output): void {
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		$this->load->model('setting/custom_field');
+		$this->load->model('customer/custom_field');
 
-		$results = $this->model_setting_custom_field->getCustomerGroups($args[0]['custom_field_id']);
+		$results = $this->model_customer_custom_field->getCustomerGroups($args[0]);
 
-		foreach ($results as $result) {
-			$task_data = [
-				'code'   => 'customer_group',
-				'action' => 'task/catalog/customer_group',
-				'args'   => []
-			];
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-			$this->model_setting_task->addTask($task_data);
+		foreach ($store_ids as $store_id) {
+			foreach ($results as $result) {
+				$task_data = [
+					'code'   => 'customer_group.delete.' . $store_id . '.' . $result['customer_group_id'],
+					'action' => 'task/catalog/customer_group',
+					'args'   => [
+						'customer_group_id' => $result['customer_group_id'],
+						'store_id'          => $store_id
+					]
+				];
+
+				$this->model_setting_task->addTask($task_data);
+			}
 		}
-
-		/*
-		$task_data = [
-			'code'   => 'customer_group',
-			'action' => 'task/admin/customer_group',
-			'args'   => []
-		];
-
-		$this->model_setting_task->addTask($task_data);
-		*/
 	}
 }

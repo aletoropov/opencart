@@ -1,13 +1,19 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
-    async connected() {
+// Language
+const language = await loader.language('checkout/cart');
 
+// Library
+const session = await loader.library('session');
+
+export default class extends Controller {
+    async render() {
+
+
+        return loader.template('checkout/cart', { ...data, ...language });
     }
 }
-
-customElements.define('x-account', XAccount);
-
 
 $('#shopping-cart').on('submit', '#output-cart form', function(e) {
     e.preventDefault();

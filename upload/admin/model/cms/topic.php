@@ -429,10 +429,10 @@ class Topic extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $topic_id): array {
 		$topic_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "topic_description` WHERE `topic_id` = '" . (int)$topic_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `td`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "topic_description` `td` WHERE `td`.`topic_id` = '" . (int)$topic_id . "'");
 
 		foreach ($query->rows as $result) {
-			$topic_description_data[$result['language_id']] = $result;
+			$topic_description_data[$result['code']] = $result;
 		}
 
 		return $topic_description_data;
@@ -523,6 +523,21 @@ class Topic extends \Opencart\System\Engine\Model {
 		}
 
 		return $topic_store_data;
+	}
+
+	/*
+	 * Get information data based on stores
+	 */
+	public function getStoresByStoreId(int $store_id): array {
+		$topic_data = [];
+
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "topic_to_store` WHERE `store_id` = '" . (int)$store_id . "'");
+
+		foreach ($query->rows as $result) {
+			$topic_data[] = $result['topic_id'];
+		}
+
+		return $topic_data;
 	}
 
 	/**

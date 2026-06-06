@@ -11,7 +11,7 @@ class Option extends \Opencart\System\Engine\Controller {
 	 *
 	 * Adds task to generate new product data.
 	 *
-	 * Called using admin/model/catalog/option.editOption/after
+	 * Trigger admin/model/catalog/option.editOption/after
 	 *
 	 * @param string                $route
 	 * @param array<string, string> $args
@@ -24,47 +24,22 @@ class Option extends \Opencart\System\Engine\Controller {
 
 		$results = $this->model_catalog_product->getProductsByOptionId($args[0]);
 
+		$this->load->model('setting/store');
 		$this->load->model('setting/task');
 
-		foreach ($results as $result) {
-			$task_data = [
-				'code'   => 'product.info.' . $result['product_id'],
-				'action' => 'task/catalog/product.info',
-				'args'   => ['product_id' => $result['product_id']]
-			];
+		$store_ids = [0, ...array_column($this->model_setting_store->getStores(), 'store_id')];
 
-			$this->model_setting_task->addTask($task_data);
-		}
-	}
+		foreach ($store_ids as $store_id) {
+			foreach ($results as $result) {
+				$task_data = [
+					'code'   => 'product.' . $result['product_id'],
+					'action' => 'task/catalog/product',
+					'args'   => ['product_id' => $result['product_id'],
+					             'store_id' => $store_id]
+				];
 
-	/*
-	 * Delete Option
-	 *
-	 * Adds task to generate new product data.
-	 *
-	 * Called using admin/model/catalog/option.deleteOption/after
-	 *
-	 * @param string                $route
-	 * @param array<string, string> $args
-	 * @param array<string, string> $output
-	 *
-	 * @return void
-	 */
-	public function deleteOption(string &$route, array &$args, &$output): void {
-		$this->load->model('catalog/product');
-
-		$results = $this->model_catalog_product->getProductsByOptionId($args[0]);
-
-		$this->load->model('setting/task');
-
-		foreach ($results as $result) {
-			$task_data = [
-				'code'   => 'product.info.' . $result['product_id'],
-				'action' => 'task/catalog/product.info',
-				'args'   => ['product_id' => $result['product_id']]
-			];
-
-			$this->model_setting_task->addTask($task_data);
+				$this->model_setting_task->addTask($task_data);
+			}
 		}
 	}
 }

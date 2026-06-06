@@ -1,13 +1,21 @@
-import { WebComponent } from '../component.js';
+import { Controller } from '../component.js';
+import { loader } from '../index.js';
 
-class XAccount extends WebComponent {
-    async connected() {
+// Language
+const language = await loader.language('account/subscription');
 
+// Library
+const session = await loader.library('session');
+
+ export default class extends Controller {
+    render() {
+        let data = {};
+
+        return loader.template('account/subscription', { ...data, ...language });
     }
 }
 
-customElements.define('x-account', XAccount);
-
+/*
 $('#button-cancel').on('click', function(e) {
     e.preventDefault();
 
@@ -52,3 +60,4 @@ $('#order').on('click', '.pagination a', function(e) {
 
     $('#order').load(this.href);
 });
+*/

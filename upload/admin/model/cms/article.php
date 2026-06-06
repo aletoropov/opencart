@@ -249,6 +249,10 @@ class Article extends \Opencart\System\Engine\Model {
 			$sql .= " AND LCASE(`ad`.`name`) LIKE '" . $this->db->escape(oc_strtolower($data['filter_name'])) . "'";
 		}
 
+		if (isset($data['filter_topic_id']) && $data['filter_topic_id'] !== '') {
+			$sql .= " AND `a`.`topic_id` = '" . (int)$data['filter_topic_id'] . "'";
+		}
+
 		if (isset($data['filter_store_id']) && $data['filter_store_id'] !== '') {
 			$sql .= " AND `a2s`.`store_id` = '" . (int)$data['filter_store_id'] . "'";
 		}
@@ -342,6 +346,10 @@ class Article extends \Opencart\System\Engine\Model {
 
 		if (!empty($data['filter_name'])) {
 			$sql .= " AND LCASE(`ad`.`name`) LIKE '" . $this->db->escape(oc_strtolower($data['filter_name']) . '%') . "'";
+		}
+
+		if (isset($data['filter_topic_id']) && $data['filter_topic_id'] !== '') {
+			$sql .= " AND `a`.`topic_id` = '" . (int)$data['filter_topic_id'] . "'";
 		}
 
 		if (isset($data['filter_store_id']) && $data['filter_store_id'] !== '') {
@@ -444,10 +452,10 @@ class Article extends \Opencart\System\Engine\Model {
 	public function getDescriptions(int $article_id): array {
 		$article_description_data = [];
 
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "article_description` WHERE `article_id` = '" . (int)$article_id . "'");
+		$query = $this->db->query("SELECT *, (SELECT `code` FROM `" . DB_PREFIX . "language` `l` WHERE `ad`.`language_id` = `l`.`language_id`) AS `code` FROM `" . DB_PREFIX . "article_description` `ad` WHERE `ad`.`article_id` = '" . (int)$article_id . "'");
 
 		foreach ($query->rows as $result) {
-			$article_description_data[$result['language_id']] = $result;
+			$article_description_data[$result['code']] = $result;
 		}
 
 		return $article_description_data;
